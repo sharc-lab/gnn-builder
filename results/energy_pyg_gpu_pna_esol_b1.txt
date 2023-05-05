@@ -1,0 +1,3 @@
+average_power 73.60714285714286
+total_energy 4048.3928571428573
+total_time 55.0

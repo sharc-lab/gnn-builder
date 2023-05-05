@@ -1,0 +1,748 @@
+{% import "model_macros.cpp.jinja" as model_macros %}
+
+#include "model.h"
+
+// Model Parameters //
+{% for param in model_parameters %}
+W_TYPE {{ param.name }}_fixed{% for dim in param.shape %}[{{ dim }}]{% endfor %};
+{% endfor %}
+
+// Input Graph Data // 
+F_TYPE node_feature_table[{{ max_nodes }}][{{ input_node_features_dim }}];
+int edge_list[{{ max_edges }}][2];
+
+// Neighbor Table Data //
+int neightbor_table_offsets[{{ max_nodes }}];
+int neighbor_table[{{ max_edges }}];
+
+// In-Degree and Out-Degree Table //
+int in_degree_table[{{ max_nodes }}];
+int out_degree_table[{{ max_nodes }}];
+
+F_TYPE node_emb_out[{{ max_nodes }}][{{ model.gnn_output_dim }}] = {0};
+
+
+{% macro call_gnn_conv(conv, idx) -%}
+{% if conv.__class__.__name__ == "GCNConv_GNNB" %}
+    gcn_conv<
+        {{max_nodes}},
+        {{max_edges}},
+        {{model.gnn_layer_sizes[idx][0]}},
+        {{model.gnn_layer_sizes[idx][1]}},
+        F_TYPE,
+        {{num_nodes_guess}},
+        {{num_edges_guess}},
+        {{degree_guess}},
+        {{conv.p_in}},
+        {{conv.p_out}}
+    >(
+        n_nodes,
+        n_edges,
+        conv_{{idx}}_in_conv,
+        conv_{{idx}}_post_conv,
+        edge_list_{{idx}},
+        neightbor_table_offsets_{{idx}},
+        neighbor_table_{{idx}},
+        in_degree_table_{{idx}},
+        out_degree_table_{{idx}},
+        gnn_convs_{{idx}}_conv_lin_weight_fixed,
+        gnn_convs_{{idx}}_conv_bias_fixed
+    );
+    {% elif conv.__class__.__name__ == "GINConv_GNNB" %}
+    
+    gin_conv<
+        {{max_nodes}},
+        {{max_edges}},
+        {{model.gnn_layer_sizes[idx][0]}},
+        {{model.gnn_layer_sizes[idx][1]}},
+        {{conv.hidden_dim}},
+        F_TYPE,
+        {{num_nodes_guess}},
+        {{num_edges_guess}},
+        {{degree_guess}},
+        {{conv.p_in}},
+        {{conv.p_out}}
+    >(
+        n_nodes,
+        n_edges,
+        conv_{{idx}}_in_conv,
+        conv_{{idx}}_post_conv,
+        edge_list_{{idx}},
+        neightbor_table_offsets_{{idx}},
+        neighbor_table_{{idx}},
+        in_degree_table_{{idx}},
+        out_degree_table_{{idx}},
+        gnn_convs_{{idx}}_mlp_linear_0_weight_fixed,
+        gnn_convs_{{idx}}_mlp_linear_0_bias_fixed,
+        gnn_convs_{{idx}}_mlp_linear_1_weight_fixed,
+        gnn_convs_{{idx}}_mlp_linear_1_bias_fixed,
+        W_TYPE({{conv.eps}})
+    );
+    {% elif conv.__class__.__name__ == "PNAConv_GNNB" %}
+    pna_conv<
+        {{max_nodes}},
+        {{max_edges}},
+        {{model.gnn_layer_sizes[idx][0]}},
+        {{model.gnn_layer_sizes[idx][1]}},
+        {{2*conv.in_channels}},
+        {{conv.in_channels}},
+        {{((4 * 3) + 1) * conv.in_channels}},
+        {{conv.out_channels}},
+        F_TYPE,
+        {{num_nodes_guess}},
+        {{num_edges_guess}},
+        {{degree_guess}},
+        {{conv.p_in}},
+        {{conv.p_out}}
+    >(
+        n_nodes,
+        n_edges,
+        conv_{{idx}}_in_conv,
+        conv_{{idx}}_post_conv,
+        edge_list_{{idx}},
+        neightbor_table_offsets_{{idx}},
+        neighbor_table_{{idx}},
+        in_degree_table_{{idx}},
+        out_degree_table_{{idx}},
+        gnn_convs_{{idx}}_conv_pre_nns_0_0_weight_fixed,
+        gnn_convs_{{idx}}_conv_pre_nns_0_0_bias_fixed,
+        gnn_convs_{{idx}}_conv_post_nns_0_0_weight_fixed,
+        gnn_convs_{{idx}}_conv_post_nns_0_0_bias_fixed,
+        gnn_convs_{{idx}}_conv_lin_weight_fixed,
+        gnn_convs_{{idx}}_conv_lin_bias_fixed,
+        F_TYPE({{ conv.delta_scaler }})
+    );
+    {% elif conv.__class__.__name__ == "SAGEConv_GNNB" %}
+    sage_conv<
+        {{max_nodes}},
+        {{max_edges}},
+        {{model.gnn_layer_sizes[idx][0]}},
+        {{model.gnn_layer_sizes[idx][1]}},
+        F_TYPE,
+        {{num_nodes_guess}},
+        {{num_edges_guess}},
+        {{degree_guess}},
+        {{conv.p_in}},
+        {{conv.p_out}}
+    >(
+        n_nodes,
+        n_edges,
+        conv_{{idx}}_in_conv,
+        conv_{{idx}}_post_conv,
+        edge_list_{{idx}},
+        neightbor_table_offsets_{{idx}},
+        neighbor_table_{{idx}},
+        in_degree_table_{{idx}},
+        out_degree_table_{{idx}},
+        gnn_convs_{{idx}}_conv_lin_l_weight_fixed,
+        gnn_convs_{{idx}}_conv_lin_l_bias_fixed,
+        gnn_convs_{{idx}}_conv_lin_r_weight_fixed
+    );
+    {% elif conv.__class__.__name__ == "GATConv_GNNB" %}
+    // TODO: GATConv
+    {% elif conv.__class__.__name__ == "GINEConv_GNNB" %}
+    // TODO: GINEConv
+    {% else %}
+    // unknown conv: {{conv.__class__.__name__}}
+    {% endif %}
+{% endmacro %}
+
+
+void compute_gnn_head(int n_nodes, int n_edges){
+    #pragma HLS INLINE off
+    #pragma HLS DATAFLOW
+    
+
+
+    // activations
+    {% if model.gnn_activation %}
+        {% if model.gnn_activation.__name__ == "ReLU" %}
+            {% set activation_kernel_type = "activation_relu" %}
+        {% elif model.gnn_activation.__name__ == "GELU" %}
+            {% set activation_kernel_type = "activation_gelu_approx_tanh" %}
+        {% elif model.gnn_activation.__name__ == "Sigmoid" %}
+            {% set activation_kernel_type = "activation_sigmoid" %}
+        {% elif model.gnn_activation.__name__ == "Tanh" %}
+            {% set activation_kernel_type = "activation_tanh" %}
+        {% else %}
+        {% endif %}
+    {% endif %}
+
+    {% if model.gnn_num_layers == 0 %}
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        for (int j = 0; j < {{ input_node_features_dim }}; j++) {
+            node_emb_out[i][j] = node_feature_table[i][j];
+        }
+    }
+    {% else %}
+    
+    {% for conv in model.gnn_convs %}
+    // generate an input and output buffer for each conv layer
+    {# F_TYPE conv_{{(loop.index - 1)}}_in[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][0]}}] = {0};
+    static F_TYPE conv_{{(loop.index - 1)}}_in_conv[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][0]}}] = {0};
+    static F_TYPE conv_{{(loop.index - 1)}}_in_skip[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][0]}}] = {0};
+    static F_TYPE conv_{{(loop.index - 1)}}_post_conv[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][1]}}] = {0};
+    static F_TYPE conv_{{(loop.index - 1)}}_post_activation[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][1]}}] = {0};
+    static F_TYPE conv_{{(loop.index - 1)}}_post_skip_connection[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][1]}}] = {0};
+    static F_TYPE conv_{{(loop.index - 1)}}_out[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][1]}}] = {0}; #}
+
+    static F_TYPE conv_{{(loop.index - 1)}}_in[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][0]}}];
+    static F_TYPE conv_{{(loop.index - 1)}}_in_conv[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][0]}}];
+    static F_TYPE conv_{{(loop.index - 1)}}_in_skip[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][0]}}];
+    static F_TYPE conv_{{(loop.index - 1)}}_post_conv[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][1]}}];
+    static F_TYPE conv_{{(loop.index - 1)}}_post_activation[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][1]}}];
+    static F_TYPE conv_{{(loop.index - 1)}}_post_skip_connection[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][1]}}];
+    static F_TYPE conv_{{(loop.index - 1)}}_out[{{max_nodes}}][{{model.gnn_layer_sizes[loop.index - 1][1]}}];
+    
+    static int edge_list_{{(loop.index - 1)}}[{{ max_edges }}][2];
+    static int neightbor_table_offsets_{{(loop.index - 1)}}[{{ max_nodes }}];
+    static int neighbor_table_{{(loop.index - 1)}}[{{ max_edges }}];
+    static int in_degree_table_{{(loop.index - 1)}}[{{ max_nodes }}];
+    static int out_degree_table_{{(loop.index - 1)}}[{{ max_nodes }}];
+
+    #pragma HLS stable variable=edge_list_{{(loop.index - 1)}}
+    #pragma HLS stable variable=neightbor_table_offsets_{{(loop.index - 1)}}
+    #pragma HLS stable variable=neighbor_table_{{(loop.index - 1)}}
+    #pragma HLS stable variable=in_degree_table_{{(loop.index - 1)}}
+    #pragma HLS stable variable=out_degree_table_{{(loop.index - 1)}}
+    {% endfor %}
+
+    for (int i = 0; i < n_edges; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_edges_guess}}
+        for (int j = 0; j < 2; j++) {
+            int val = edge_list[i][j];
+            {% for conv in model.gnn_convs %}
+            edge_list_{{(loop.index - 1)}}[i][j] = val;
+            {% endfor %}
+        }
+    }
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        int val = neightbor_table_offsets[i];
+        {% for conv in model.gnn_convs %}
+        neightbor_table_offsets_{{(loop.index - 1)}}[i] = val;
+        {% endfor %}
+    }
+    for (int i = 0; i < n_edges; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_edges_guess}}
+        int val = neighbor_table[i];
+        {% for conv in model.gnn_convs %}
+        neighbor_table_{{(loop.index - 1)}}[i] = val;
+        {% endfor %}
+    }
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        int val = in_degree_table[i];
+        {% for conv in model.gnn_convs %}
+        in_degree_table_{{(loop.index - 1)}}[i] = val;
+        {% endfor %}
+    }
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        int val = out_degree_table[i];
+        {% for conv in model.gnn_convs %}
+        out_degree_table_{{(loop.index - 1)}}[i] = val;
+        {% endfor %}
+    }
+
+    // copy node features to the first input buffer
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        for (int j = 0; j < {{ input_node_features_dim }}; j++) {
+            conv_0_in[i][j] = node_feature_table[i][j];
+        }
+    }
+
+    {% for conv in model.gnn_convs %}
+    ///////////////////////////////
+    // conv layer {{loop.index - 1}}
+    ///////////////////////////////
+
+    {% if loop.index == 1 %}
+        {% set do_skip = False %}
+    {% elif loop.index == model.gnn_num_layers %}
+        {% set do_skip = False %}
+    {% else %}
+        {% if model.gnn_skip_connection %}
+            {% set do_skip = True %}
+        {% else %}
+            {% set do_skip = False %}
+        {% endif %}
+    {% endif %}
+    // do_skip = {{do_skip}}
+
+    {% if loop.index == model.gnn_num_layers %}
+        {% set not_last = False %}
+    {% else %}
+        {% set not_last = True %}
+    {% endif %}
+    // not_last = {{not_last}}
+
+    // read to input buffer and skip connection buffer if skip connection is enabled
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][0]}}; j++) {
+            conv_{{(loop.index - 1)}}_in_conv[i][j] = conv_{{(loop.index - 1)}}_in[i][j];
+            {% if do_skip %}
+                conv_{{(loop.index - 1)}}_in_skip[i][j] = conv_{{(loop.index - 1)}}_in[i][j];
+            {% endif %}
+        }
+    }
+    // compute the conv layer
+    // placeholder
+    {# conv(conv_{{(loop.index - 1)}}_in_conv, conv_{{(loop.index - 1)}}_post_conv, n_nodes, n_edges); #}
+{{call_gnn_conv(conv, loop.index - 1)}}
+    // skip connection
+    {% if do_skip %}
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][1]}}; j++) {
+            conv_{{(loop.index - 1)}}_post_skip_connection[i][j] = conv_{{(loop.index - 1)}}_in_skip[i][j] + conv_{{(loop.index - 1)}}_post_conv[i][j];
+        }
+    }
+    {% endif %}
+    // activation
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][1]}}; j++) {
+            {% if do_skip %}
+                conv_{{(loop.index - 1)}}_post_activation[i][j] = {{activation_kernel_type}}(conv_{{(loop.index - 1)}}_post_skip_connection[i][j]);
+            {% else %}
+                conv_{{(loop.index - 1)}}_post_activation[i][j] = {{activation_kernel_type}}(conv_{{(loop.index - 1)}}_post_conv[i][j]);
+            {% endif %}
+        }
+    }
+    // copy output to conv_out
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][1]}}; j++) {
+            conv_{{(loop.index - 1)}}_out[i][j] = conv_{{(loop.index - 1)}}_post_activation[i][j];
+        }
+    }
+
+    ///////////////////////////////
+
+    {% if not_last %}
+    // copy conv output to next conv input: conv_{{loop.index-1}}_out -> conv_{{loop.index}}_in
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][1]}}; j++) {
+            conv_{{loop.index}}_in[i][j] = conv_{{(loop.index - 1)}}_out[i][j];
+        }
+    }
+    {% endif %}
+
+    ///////////////////////////////
+
+    {% endfor %}
+
+    // copy last conv output to node_emb_out
+
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        for (int j = 0; j < {{model.gnn_output_dim}}; j++) {
+            node_emb_out[i][j] = conv_{{(model.gnn_num_layers - 1)}}_out[i][j];
+        }
+    }
+
+    {% endif %}
+
+
+}
+
+
+// macro for global pooling
+{% macro call_global_pooling(agg, idx) %}
+{% if agg == "add" %}
+    global_add_pool<
+        {{ max_nodes }},
+        {{ max_edges }},
+        {{ model.gnn_output_dim }},
+        F_TYPE,
+        {{num_nodes_guess}},
+        {{num_edges_guess}}
+    >(
+        n_nodes,
+        n_edges,
+        global_pooling_{{idx}}_in,
+        global_pooling_{{idx}}_out
+    );
+    {% elif agg == "mean" %}
+    global_mean_pool<
+        {{ max_nodes }},
+        {{ max_edges }},
+        {{ model.gnn_output_dim }},
+        F_TYPE,
+        {{num_nodes_guess}},
+        {{num_edges_guess}}
+    >(
+        n_nodes,
+        n_edges,
+        global_pooling_{{idx}}_in,
+        global_pooling_{{idx}}_out
+    );
+    {% elif agg == "max" %}
+    global_max_pool<
+        {{ max_nodes }},
+        {{ max_edges }},
+        {{ model.gnn_output_dim }},
+        F_TYPE,
+        {{num_nodes_guess}},
+        {{num_edges_guess}}
+    >(
+        n_nodes,
+        n_edges,
+        global_pooling_{{idx}}_in,
+        global_pooling_{{idx}}_out
+    );
+{% else %}
+{% endif %}
+{% endmacro %}
+
+
+F_TYPE global_pooling_buffer[{{ model.gnn_output_dim * model.global_pooling.num_of_aggrs}}] = {0};
+
+void compute_global_graph_pooling(int n_nodes, int n_edges){
+    #pragma HLS INLINE off
+    #pragma HLS DATAFLOW
+    #pragma HLS ARRAY_PARTITION variable=global_pooling_buffer block factor={{model.global_pooling.num_of_aggrs}} dim=1
+    
+    {% for agg in model.global_pooling.aggrs %}
+    static F_TYPE global_pooling_{{(loop.index-1)}}_in[{{max_nodes}}][{{model.gnn_output_dim}}];
+    static F_TYPE global_pooling_{{(loop.index-1)}}_out[{{model.gnn_output_dim}}];
+    {% endfor %}
+
+    // copy node_emb_out to global_pooling_in buffers
+    for (int i = 0; i < n_nodes; i++) {
+        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        for (int j = 0; j < {{model.gnn_output_dim}}; j++) {
+            F_TYPE node_emb_out_i_j = node_emb_out[i][j];
+            {% for agg in model.global_pooling.aggrs %}
+            global_pooling_{{(loop.index-1)}}_in[i][j] = node_emb_out_i_j;
+            {% endfor %}
+        }
+    }
+
+    {% for agg in model.global_pooling.aggrs %}
+{{ call_global_pooling(agg, loop.index-1) }}
+    {% endfor %}
+
+    for (int i = 0; i < {{ model.gnn_output_dim}}; i++) {
+        {% for agg in model.global_pooling.aggrs %}
+        global_pooling_buffer[{{loop.index-1}} * {{model.gnn_output_dim}} + i] = global_pooling_{{(loop.index-1)}}_out[i];
+        {% endfor %}
+    }
+}
+
+
+F_TYPE mlp_buffer_out[{{model.mlp_head.out_dim}}] = {0};
+
+void compute_mlp_head(){
+    #pragma HLS INLINE off
+    #pragma HLS DATAFLOW
+
+    {% if model.mlp_head.activation %}
+        {% if model.mlp_head.activation.__name__ == "ReLU" %}
+            {% set activation_kernel_type = "activation_relu" %}
+        {% elif model.mlp_head.activation.__name__ == "GELU" %}
+            {% set activation_kernel_type = "activation_gelu_approx_tanh" %}
+        {% elif model.mlp_head.activation.__name__ == "Sigmoid" %}
+            {% set activation_kernel_type = "activation_sigmoid" %}
+        {% elif model.mlp_head.activation.__name__ == "Tanh" %}
+            {% set activation_kernel_type = "activation_tanh" %}
+        {% else %}
+        {% endif %}
+    {% endif %}
+
+    {% for layer in model.mlp_head.linear_layers %}
+    static F_TYPE mlp_{{loop.index-1}}_in[{{layer.in_features}}];
+    static F_TYPE mlp_{{loop.index-1}}_out_linear[{{layer.out_features}}];
+    static F_TYPE mlp_{{loop.index-1}}_out_activation[{{layer.out_features}}];
+    static F_TYPE mlp_{{loop.index-1}}_out[{{layer.out_features}}];
+
+    {% endfor %}
+
+    copy_1d<{{model.mlp_head.in_dim}}, F_TYPE>(global_pooling_buffer, mlp_0_in);
+
+    {% for layer in model.mlp_head.linear_layers %}
+        {% if loop.index == model.mlp_head.num_of_layers %}
+            {% set not_last = False %}
+        {% else %}
+            {% set not_last = True %}
+        {% endif %}
+    
+    // linear layer {{loop.index-1}}
+    // not_last: {{not_last}}
+
+    linear_buffered<
+        {{layer.in_features}},
+        {{layer.out_features}},
+        {{model.mlp_head.p_factors[loop.index-1][0]}},
+        {{model.mlp_head.p_factors[loop.index-1][1]}},
+        F_TYPE
+    >(
+        mlp_{{loop.index-1}}_in,
+        mlp_{{loop.index-1}}_out_linear,
+        mlp_head_linear_layers_{{loop.index-1}}_weight_fixed,
+        mlp_head_linear_layers_{{loop.index-1}}_bias_fixed
+    );
+        {% if not_last %}
+
+            {% if model.gnn_activation %}
+    for (int i = 0; i < {{layer.out_features}}; i++) {
+        mlp_{{loop.index-1}}_out_activation[i] = {{activation_kernel_type}}(mlp_{{loop.index-1}}_out_linear[i]);
+    }
+            {% else %}
+    copy_1d<{{layer.out_features}}, F_TYPE>(mlp_{{loop.index-1}}_out_linear, mlp_{{loop.index-1}}_out_activation);
+            {% endif %}
+
+    copy_1d<{{layer.out_features}}, F_TYPE>(mlp_{{loop.index-1}}_out_activation, mlp_{{loop.index-1}}_out);
+    copy_1d<{{layer.out_features}}, F_TYPE>(mlp_{{loop.index-1}}_out, mlp_{{loop.index}}_in);
+
+        {% else %}
+
+    copy_1d<{{layer.out_features}}, F_TYPE>(mlp_{{loop.index-1}}_out_linear, mlp_{{loop.index-1}}_out);
+
+        {% endif %}
+
+    {% endfor %}
+
+    copy_1d<{{model.mlp_head.out_dim}}, F_TYPE>(mlp_{{model.mlp_head.num_of_layers-1}}_out, mlp_buffer_out);       
+}
+
+{# F_TYPE mlp_buffer_hidden_0[{{model.mlp_head.hidden_dim}}] = {0};
+F_TYPE mlp_buffer_hidden_1[{{model.mlp_head.hidden_dim}}] = {0};
+
+F_TYPE mlp_buffer_first[{{model.mlp_head.in_dim}}] = {0};
+F_TYPE mlp_buffer_last[{{model.mlp_head.out_dim}}] = {0};
+
+void compute_mlp_head(){
+    #pragma HLS INLINE off
+
+    copy_1d<{{model.mlp_head.in_dim}}, F_TYPE>(global_pooling_buffer, mlp_buffer_first);
+    
+    {% if model.mlp_head.hidden_layers == 0 %}
+    linear<
+    {{ model.mlp_head.in_dim }},
+    {{ model.mlp_head.out_dim }},
+    {{ model.mlp_head.p_in }},
+    {{ model.mlp_head.p_out }},
+    F_TYPE
+    >(
+        mlp_buffer_first,
+        mlp_buffer_last,
+        mlp_head_linear_layers_0_weight_fixed,
+        mlp_head_linear_layers_0_bias_fixed,
+    );
+    {% else %}
+    
+    {% for i in range(model.mlp_head.hidden_layers) %}
+    {% if i == 0 %}
+    linear<
+        {{ model.mlp_head.in_dim }},
+        {{ model.mlp_head.hidden_dim }},
+        {{ model.mlp_head.p_in }},
+        {{ model.mlp_head.p_hidden }},
+        F_TYPE
+    >(
+        mlp_buffer_first,
+        mlp_buffer_hidden_0,
+        mlp_head_linear_layers_0_weight_fixed,
+        mlp_head_linear_layers_0_bias_fixed
+    );
+    {% else %}
+    linear<
+        {{ model.mlp_head.hidden_dim }},
+        {{ model.mlp_head.hidden_dim }},
+        {{ model.mlp_head.p_hidden }},
+        {{ model.mlp_head.p_hidden }},
+        F_TYPE
+    >(
+        mlp_buffer_hidden_{{ ((i+1)%2) }},
+        mlp_buffer_hidden_{{ (i%2) }},
+        mlp_head_linear_layers_{{i}}_weight_fixed,
+        mlp_head_linear_layers_{{i}}_bias_fixed
+    );
+    {% endif %}
+
+    // normalization
+    
+    // activation
+    {% if model.gnn_activation %}
+    {% if model.gnn_activation.__name__ == "ReLU" %}
+    {% set activation_kernel_type = "relu" %}
+    {% elif model.gnn_activation.__name__ == "GELU" %}
+    {% set activation_kernel_type = "gelu_1" %}
+    {% elif model.gnn_activation.__name__ == "Sigmoid" %}
+    {% set activation_kernel_type = "sigmoid" %}
+    {% elif model.gnn_activation.__name__ == "Tanh" %}
+    {% set activation_kernel_type = "tanh" %}
+    {% else %}
+    {% endif %}
+    for (int i = 0; i < {{ model.mlp_head.hidden_dim }}; i++) {
+        mlp_buffer_hidden_{{ (i%2) }}[i] = activation_{{activation_kernel_type}}(mlp_buffer_hidden_{{ (i%2) }}[i]);
+    }
+    {% endif %}
+
+    {% endfor %}
+
+    
+    // last layer embedding
+    linear<
+        {{ model.mlp_head.hidden_dim }},
+        {{ model.mlp_head.out_dim }},
+        {{ model.mlp_head.p_hidden }},
+        {{ model.mlp_head.p_out }},
+        F_TYPE
+    >(
+        mlp_buffer_hidden_{{ ((model.mlp_head.hidden_layers+1)%2) }},
+        mlp_buffer_last,
+        mlp_head_linear_layers_{{model.mlp_head.hidden_layers}}_weight_fixed,
+        mlp_head_linear_layers_{{model.mlp_head.hidden_layers}}_bias_fixed
+    );
+    {% endif %}
+} #}
+
+F_TYPE model_output_buffer[{{model.mlp_head.out_dim}}] = {0};
+
+void compute_model_output(){
+    #pragma HLS INLINE off
+    #pragma HLS DATAFLOW
+
+    {% if model.output_activation %}
+        {% if model.output_activation.__name__ == "ReLU" %}
+            {% set activation_kernel_type = "activation_relu" %}
+        {% elif model.output_activation.__name__ == "GELU" %}
+            {% set activation_kernel_type = "activation_gelu_approx_tanh" %}
+        {% elif model.output_activation.__name__ == "Sigmoid" %}
+            {% set activation_kernel_type = "activation_sigmoid" %}
+        {% elif model.output_activation.__name__ == "Tanh" %}
+            {% set activation_kernel_type = "activation_tanh" %}
+        {% else %}
+        {% endif %}
+    {% endif %}
+
+    {% if model.output_activation %}
+    for (int i = 0; i < {{ model.mlp_head.out_dim }}; i++) {
+        model_output_buffer[i] = {{activation_kernel_type}}(mlp_buffer_out[i]);
+    }
+    {% else %}
+    copy_1d<{{model.mlp_head.out_dim}}, F_TYPE>(mlp_buffer_out, model_output_buffer);
+    {% endif %}
+}
+
+// Load Parameters Function //
+void load_parameters(
+{% for param in model_parameters %}
+    F_TYPE {{ param.name }}_fixed_in{% for dim in param.shape %}[{{ dim }}]{% endfor %}{{ "," if not loop.last }}
+{% endfor %}
+){
+    #pragma HLS INLINE off
+    
+{% for param in model_parameters %}
+    {% if param.shape | length == 1 %}
+    copy_1d<{{ param.shape[0] }}>({{ param.name }}_fixed_in, {{ param.name }}_fixed);
+    {% endif %}
+    {% if param.shape | length == 2 %}
+    copy_2d<{{ param.shape[0] }}, {{ param.shape[1] }}>({{ param.name }}_fixed_in, {{ param.name }}_fixed);
+    {% endif %}
+    {% if param.shape | length == 3 %}
+    copy_3d<{{ param.shape[0] }}, {{ param.shape[1] }}, {{ param.shape[2] }}>({{ param.name }}_fixed_in, {{ param.name }}_fixed);
+    {% endif %}
+{% endfor %}
+}
+
+// Load Graph Data Function //
+void load_graph_data(
+    F_TYPE node_feature_table_in[{{ max_nodes }}][{{ input_node_features_dim }}],
+    int edge_list_in[{{ max_edges }}][2]
+){
+    #pragma HLS INLINE off
+    
+    copy_2d<{{ max_nodes }}, {{ input_node_features_dim }}>(node_feature_table_in, node_feature_table);
+    copy_2d<{{ max_edges }}, 2>(edge_list_in, edge_list);
+}
+
+// Top Kernel //
+void {{model_top_name}}_top(
+    F_TYPE node_feature_table_input[{{ max_nodes }}][{{ input_node_features_dim }}],
+    int edge_list_input[{{ max_edges }}][2],
+    F_TYPE model_output[{{ output_features_dim }}],
+    int num_of_nodes,
+    int num_of_edges,
+    int copy_parameters_flag,
+{% for param in model_parameters %}
+    W_TYPE {{ param.name }}_fixed_in{% for dim in param.shape %}[{{ dim }}]{% endfor %}{{ "," if not loop.last }}
+{% endfor %}
+){
+
+    #pragma HLS INTERFACE m_axi depth={{ max_nodes*input_node_features_dim }} port=node_feature_table_input offset=slave bundle=mem
+    #pragma HLS INTERFACE m_axi depth={{ max_edges*2 }} port=edge_list_input offset=slave bundle=mem
+
+{% for param in model_parameters %}
+    #pragma HLS INTERFACE m_axi depth={{ param.size }} port={{ param.name }}_fixed_in offset=slave bundle=mem
+{% endfor %}
+
+
+    #pragma HLS bind_storage variable=node_feature_table type=RAM_2P impl=bram
+    #pragma HLS bind_storage variable=edge_list type=RAM_2P impl=bram
+
+{% for param in model_parameters %}
+    {% if param.size == 1 %}
+    {# #pragma HLS bind_storage variable={{ param.name }}_fixed type=RAM_2P impl=bram
+     #}
+    // dont need to bind storage for 1 element parameters
+    {% else %}
+    #pragma HLS bind_storage variable={{ param.name }}_fixed type=RAM_2P impl=bram
+    {% endif %}
+{% endfor %}
+
+
+    int num_of_nodes_top = num_of_nodes;
+    int num_of_edges_top = num_of_edges;
+    int copy_parameters_flag_top = copy_parameters_flag;
+    
+    if (copy_parameters_flag_top) {
+        load_parameters(
+        {% for param in model_parameters %}
+            {{ param.name }}_fixed_in{{ "," if not loop.last }}
+        {% endfor %}
+        );
+    }
+
+    load_graph_data(
+        node_feature_table_input,
+        edge_list_input
+    );
+
+    compute_degree_tables<{{ max_nodes }}, {{ max_edges }}, {{num_nodes_guess}}, {{num_edges_guess}}>(
+        edge_list,
+        in_degree_table,
+        out_degree_table,
+        num_of_nodes_top,
+        num_of_edges_top
+    );
+
+    compute_neighbor_tables<
+        {{ max_nodes }},
+        {{ max_edges }},
+        {{num_nodes_guess}},
+        {{num_edges_guess}}
+    >(
+        edge_list,
+        in_degree_table,
+        out_degree_table,
+        neightbor_table_offsets,
+        neighbor_table,
+        num_of_nodes_top,
+        num_of_edges_top
+    );
+
+    compute_gnn_head(num_of_nodes_top, num_of_edges_top);
+    compute_global_graph_pooling(num_of_nodes_top, num_of_edges_top);
+    compute_mlp_head();
+    compute_model_output();
+
+    copy_1d<{{ output_features_dim }}, F_TYPE>(model_output_buffer, model_output);
+}

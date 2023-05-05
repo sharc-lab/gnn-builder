@@ -1,0 +1,36 @@
+# makefile for builing a FPGA image form C++ HLS code
+
+# HLS kernel name
+KERNEL_NAME = {{model_top_name}}
+
+# Alveo U280
+# TODO: add support for user defined platform
+PLATFROM = xilinx_u280_gen3x16_xdma_1_202211_1
+
+VITIS_BUILD_DIR = ./vitis_build
+
+VPP = v++
+VPPFLAGS = -t hw --platform $(PLATFROM) --save-temps --temp_dir $(VITIS_BUILD_DIR) --log_dir $(VITIS_BUILD_DIR) --report_dir $(VITIS_BUILD_DIR)
+VPP_VIVADO_FLAGS = --vivado.impl.jobs {{n_jobs}} --vivado.synth.jobs {{n_jobs}}
+# TODO look into issues tyring to get power report to work
+VPP_VIVADO_REPORT = --advanced.misc report=type report_power name $(KERNEL_NAME)_power steps {route_design} runs {impl_1} options {-verbose}
+VPP_VIVADO_REPORT += --advanced.misc report=type report_utilization name $(KERNEL_NAME)_utilization steps {route_design} runs {impl_1} options {-verbose}
+VPP_VIVADO_REPORT += --advanced.misc report=type report_timing name $(KERNEL_NAME)_timing steps {route_design} runs {impl_1} options {-verbose}
+VPP_VIVADO_REPORT += --advanced.misc report=type report_timing_summary name $(KERNEL_NAME)_timing_summary steps {route_design} runs {impl_1} options {-verbose}
+
+# HLS source files
+HLS_SRC = $(wildcard *.cc) $(wildcard *.h)
+
+$(info "KERNEL_NAME: $(KERNEL_NAME)")
+$(info "HLS_SRC: $(HLS_SRC)")
+$(info "VPPFLAGS: $(VPPFLAGS)")
+$(info "VPP_VIVADO_FLAGS: $(VPP_VIVADO_FLAGS)")
+$(info "VPP_VIVADO_REPORT: $(VPP_VIVADO_REPORT)")
+
+# compile to xo
+$(KERNEL_NAME).xo: $(HLS_SRC)
+	$(VPP) $(VPPFLAGS) -c -k $(KERNEL_NAME)_top -I'$(<D)' -o'$@' '$<'
+# link xo to xclbin
+$(KERNEL_NAME).xclbin: $(KERNEL_NAME).xo
+	$(VPP) $(VPPFLAGS) -l -o'$@' '$<'
+all: $(KERNEL_NAME).xclbin

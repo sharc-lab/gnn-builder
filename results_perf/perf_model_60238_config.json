@@ -1,0 +1,13 @@
+{
+    "conv": "gcn",
+    "gnn_hidden_dim": 256,
+    "gnn_out_dim": 128,
+    "gnn_num_layers": 3,
+    "gnn_skip_connections": false,
+    "mlp_hidden_dim": 256,
+    "mlp_num_layers": 4,
+    "gnn_p_hidden": 8,
+    "gnn_p_out": 2,
+    "mlp_p_in": 2,
+    "mlp_p_hidden": 4
+}

@@ -1,0 +1,68 @@
+{% macro gcn_conv(
+    MAX_NODES,
+    MAX_EDGES,
+    EMB_SIZE_IN,
+    EMB_SIZE_OUT,
+    T,
+    NUM_NODES_GUESS,
+    NUM_EDGES_GUESS,
+    DEGREE_GUESS,
+    P_IN,
+    P_OUT,
+    num_nodes,
+    num_edges,
+    node_embedding_table_in,
+    node_embedding_table_out,
+    edge_list,
+    neightbor_table_offsets,
+    neighbor_table,
+    in_degree_table,
+    out_degree_table,
+    apply_lin_weight,
+    apply_lin_bias
+) -%}
+gcn_conv<
+    {{MAX_NODES}},
+    {{MAX_EDGES}},
+    {{EMB_SIZE_IN}},
+    {{EMB_SIZE_OUT}},
+    {{T}},
+    {{NUM_NODES_GUESS}},
+    {{NUM_EDGES_GUESS}},
+    {{DEGREE_GUESS}},
+    {{P_IN}},
+    {{P_OUT}}
+>(
+    {{num_nodes}},
+    {{num_edges}},
+    {{node_embedding_table_in}},
+    {{node_embedding_table_out}},
+    {{edge_list}},
+    {{neightbor_table_offsets}},
+    {{neighbor_table}},
+    {{in_degree_table}},
+    {{out_degree_table}},
+    {{apply_lin_weight}},
+    {{apply_lin_bias}}
+);
+{%- endmacro %}
+
+{% macro gin_conv() -%}
+gin_conv<>();
+{%- endmacro %}
+
+{% macro gat_conv() -%}
+gat_conv<>();
+{%- endmacro %}
+
+{% macro pna_conv() -%}
+pna_conv<>();
+{%- endmacro %}
+
+{% macro sage_conv() -%}
+sage_conv<>();
+{%- endmacro %}
+
+{% macro cpp_array_def(name, shape, type) -%}
+{{ type }} {{name}}{% for dim in shape %}[{{ dim }}]{% endfor %};
+{%- endmacro %}

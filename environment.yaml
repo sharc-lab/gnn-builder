@@ -1,0 +1,36 @@
+name: gnnbuilder
+channels:
+  - pytorch
+  - nvidia
+  - pyg
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.7
+  - pyg>=2.2.0
+  - numpy
+  - scipy
+  - networkx
+  - scikit-learn
+  - matplotlib
+  - pandas
+  - seaborn
+  - jinja2
+  - tqdm
+  - joblib
+  - rich
+  - textual
+  - python-dotenv
+  - mypy
+  - black
+  - pylint
+  - ruff
+  - flake8
+  - rdkit
+  - pynvml
+  - pip:
+    - pyJoules

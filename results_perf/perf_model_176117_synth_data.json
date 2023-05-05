@@ -1,0 +1,13 @@
+{
+    "clock_period": 3.33,
+    "worst_case_runtime_cycles_top": 1569199.0,
+    "worst_case_runtime_cycles_load_parameters": 596409.0,
+    "worst_case_runtime_cycles": 972790.0,
+    "worst_case_runtime_ns": 3239390.7,
+    "worst_case_runtime": 0.0032393907,
+    "bram": 759,
+    "dsp": 329,
+    "ff": 89407,
+    "lut": 105242,
+    "uram": 0
+}

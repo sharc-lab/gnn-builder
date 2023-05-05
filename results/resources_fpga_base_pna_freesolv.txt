@@ -1,0 +1,5 @@
+bram 864
+dsp 259
+ff 235495
+lut 232256
+uram 0
