@@ -1,14 +1,25 @@
-# GNNBuilder
+# 🛠️ GNNBuilder 
 
-GNNBuilder is a framework for generating FPGA hardware accelerators for graph neural networks (GNNs). A user can provide a trained PyTorch model, and the GNNBuilder framework can generate high-level synthesis (HLS) C++ code for the model. This HLS model can then be used to build a bitstream of the model that can be executed on an FPGA. This framework also provides some simple design space exploration (DSE) tools using a performance model that the designer can use to parameterize the hardware implementation in terms of parallelism and numerical precision for accuracy, latency, and resource usage tradeoffs.
+GNNBuilder is a framework for generating FPGA hardware accelerators for graph neural networks (GNNs).
 
-## Basic Example Usage
+It is developed and maintained by the [Stefan Abi-Karam](https://stefanabikaram.com/) from [Sharc Lab](https://sharclab.ece.gatech.edu/) at [Georgia Tech](https://www.gatech.edu/).
+
+
+## Initial Demo
+
+Below is a simple demo of the GNNBuilder framework from `demos/demo.py`.
 
 ```python
 import gnnbuilder as gnnb
 
 # TODO: Add example code
 ```
+
+A user can provide a trained PyTorch model, and the GNNBuilder framework can generate high-level synthesis (HLS) C++ code for the model.
+
+This HLS model can then be used to build a bitstream of the model that can be executed on an FPGA. 
+
+This framework also provides some simple design space exploration (DSE) tools using a performance model that the designer can use to parameterize the hardware implementation in terms of parallelism and numerical precision for accuracy, latency, and resource usage tradeoffs.
 
 ## Requirements
 

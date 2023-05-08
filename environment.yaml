@@ -32,5 +32,3 @@ dependencies:
   - flake8
   - rdkit
   - pynvml
-  - pip:
-    - pyJoules

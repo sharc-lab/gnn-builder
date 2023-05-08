@@ -2,14 +2,9 @@ import numpy as np
 import pandas as pd
 import tqdm
 
-# from pyJoules.energy_meter import EnergyContext
-# from pyJoules.device.nvidia_device import NvidiaGPUDomain, NvidiaGPUDevice
-# from pyJoules.handler.pandas_handler import PandasHandler
-
 from pathlib import Path
 import os
 import itertools
-# from pprint import pp
 import subprocess
 import time
 
