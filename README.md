@@ -59,7 +59,7 @@ For ease of setup, we highly recommend using a Linux-based operating system. We 
 
 We are also currently working on composing all the necessary tools and libraries into a Docker image for ease of use across different systems.
 
-## Referencing GNNBuilder
+## Citing and Referencing GNNBuilder
 
 You can cite GNNBuilder as it was mainly published at FPL 2023.
 
