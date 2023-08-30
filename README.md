@@ -47,7 +47,7 @@ To install GNNBuilder using `conda` (or equivalent package manager like `mamba`)
 conda install gnnbuilder
 ```
 
-# Requirements and System Setup
+## Requirements and System Setup
 
 The core library itself only requires Python packages and does not require any external tools.
 
