@@ -1,4 +1,4 @@
-name: gnnbuilder
+name: gnn-builder
 channels:
   - pytorch
   - nvidia
@@ -10,8 +10,8 @@ dependencies:
   - pytorch
   - torchvision
   - torchaudio
-  - pytorch-cuda=11.7
-  - pyg>=2.2.0
+  - pytorch-cuda=11.8
+  - pyg>=2.3
   - numpy
   - scipy
   - networkx

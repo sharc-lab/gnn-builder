@@ -15,8 +15,8 @@ import torch.utils.benchmark as benchmark
 from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import MoleculeNet, QM9
 
-import gnn_builder as gnnb
-from gnn_builder.models import MLP
+import gnnbuilder as gnnb
+from gnnbuilder.models import MLP
 
 
 def compute_max_nodes_and_edges(dataset):

@@ -1,3 +1,59 @@
+[project]
+name = "gnn-builder"
+version = "0.0.1"
+readme = "README.md"
+license = { file = "LICENSE" }
+description = "GNNBuilder is a framework for generating FPGA hardware accelerators for graph neural networks (GNNs) ujsing High Level Synthesis (HLS)."
+authors = [
+    { name = "Stefan Abi-Karam", email = "stefanabikaram@gatech.edu" },
+    { name = "Sharc Lab" },
+]
+keywords = [
+    "Graph Neural Networks",
+    "Deep Learning Accelerators",
+    "Vitis HLS",
+    "High-Level Synthesis",
+    "Xilinx",
+    "FPGA",
+    "Electronic Design Automation",
+]
+classifiers = []
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[project.optional-dependencies]
+docs = ["sphinx", "furo", "sphinx-autodoc-typehints"]
+test = ["pytest"]
+
+[project.urls]
+"Homepage" = "https://github.com/sharc-lab/gnn-builder"
+"Repository" = "https://github.com/sharc-lab/gnn-builder"
+"Paper" = "https://arxiv.org/abs/2303.16459"
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["gnnbuilder"]
+include_package_data = true
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
 [tool.black]
 line-length = 88
-target-version = ['py310']
+preview = true
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+skip_gitignore = true
