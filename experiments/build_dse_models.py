@@ -21,10 +21,10 @@ import torch.nn as nn
 
 from torch_geometric.datasets import QM9
 
-import gnn_builder as gnnb
-from gnn_builder import MLP
-from gnn_builder.code_gen import FPX
-from gnn_builder.utils import compute_median_nodes_and_edges, compute_median_degree
+import gnnbuilder as gnnb
+from gnnbuilder import MLP
+from gnnbuilder.code_gen import FPX
+from gnnbuilder.utils import compute_median_nodes_and_edges, compute_median_degree
 
 
 VITIS_HLS_PATH = Path("/tools/software/xilinx/Vitis_HLS/2022.1/")

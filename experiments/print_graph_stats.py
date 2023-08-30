@@ -1,4 +1,4 @@
-from gnn_builder.utils import compute_median_nodes_and_edges
+from gnnbuilder.utils import compute_median_nodes_and_edges
 from torch_geometric.datasets import MoleculeNet, QM9
 import pandas as pd
 

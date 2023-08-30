@@ -19,7 +19,7 @@ import copy
 
 from torch_geometric.datasets import QM9
 
-import gnn_builder as gnnb
+import gnnbuilder as gnnb
 
 from sklearn.linear_model import (
     LinearRegression,

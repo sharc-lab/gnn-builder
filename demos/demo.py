@@ -18,8 +18,8 @@ from collections import Counter
 # import tqdm
 from dotenv import dotenv_values
 
-import gnn_builder as gnnb
-from gnn_builder.code_gen import FPX
+import gnnbuilder as gnnb
+from gnnbuilder.code_gen import FPX
 
 import logging
 
