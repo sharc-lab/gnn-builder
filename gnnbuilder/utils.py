@@ -1,9 +1,8 @@
-from pathlib import Path
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
-import torch
 import numpy as np
-
+import torch
 from torch_geometric.utils import degree as pyg_degree
 
 
@@ -70,6 +69,7 @@ def compute_average_degree(dataset, round_val=True):
         avg_degree = int(np.ceil(avg_degree))
     return avg_degree
 
+
 def compute_median_degree(dataset):
     degrees = []
     for data in dataset:
@@ -78,6 +78,7 @@ def compute_median_degree(dataset):
     median_degree = np.median(degrees)
     median_degree_round = int(np.ceil(median_degree))
     return median_degree_round
+
 
 def compute_in_deg_histogram(dataset):
     # Compute the maximum in-degree in the training data.
@@ -93,6 +94,7 @@ def compute_in_deg_histogram(dataset):
         deg += torch.bincount(d, minlength=deg.numel())
 
     return deg
+
 
 def layer_param_name_combiner(layer_name, param_name):
     return f"{layer_name}_{param_name.replace('.', '_')}"
@@ -155,7 +157,9 @@ def extract_data_from_csynth_report(top_report_path: Path):
     synth_data = {
         "clock_period": clock_period,
         "worst_case_runtime_cycles_top": worst_case_runtime_cycles_top,
-        "worst_case_runtime_cycles_load_parameters": worst_case_runtime_cycles_load_parameters,
+        "worst_case_runtime_cycles_load_parameters": (
+            worst_case_runtime_cycles_load_parameters
+        ),
         "worst_case_runtime_cycles": worst_case_runtime_cycles,
         "worst_case_runtime_ns": worst_case_runtime_ns,
         "worst_case_runtime": worst_case_runtime,

@@ -1,26 +1,18 @@
+from typing import Callable, Optional
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torch.nn import Sequential, ModuleList
 from torch import Tensor
-
-from torch_geometric.nn import MessagePassing
-from torch_geometric.nn import (
+from torch.nn import ModuleList
+from torch_geometric.nn import (  # GINEConv,
+    GATConv,
     GCNConv,
     GINConv,
-    # GINEConv,
-    GATConv,
-    GATv2Conv,
     PNAConv,
     SAGEConv,
+    aggr,
 )
-from torch_geometric.nn import global_add_pool, global_mean_pool, global_max_pool
-from torch_geometric.nn import aggr
-from torch_geometric.data import Data
 from torch_geometric.typing import Adj
-
-from typing import Union, Optional, Callable
-from rich.pretty import pprint as pp
 
 from .utils import layer_param_name_combiner
 
@@ -283,12 +275,14 @@ class GlobalPooling(torch.nn.Module):
         for aggr_str in self.aggrs:
             if aggr_str not in SUPPORTED_GLOBAL_POOLING_AGGRS:
                 raise NotImplementedError(
-                    f"Aggregation {aggr_str} is not supported. Supported aggregations are {SUPPORTED_GLOBAL_POOLING_AGGRS}."
+                    f"Aggregation {aggr_str} is not supported. Supported aggregations"
+                    f" are {SUPPORTED_GLOBAL_POOLING_AGGRS}."
                 )
 
         if self.mode not in SUPPORTED_GLOBAL_POOLING_MODE:
             raise NotImplementedError(
-                f"Mode {self.mode} is not supported. Supported modes are {SUPPORTED_GLOBAL_POOLING_MODE}."
+                f"Mode {self.mode} is not supported. Supported modes are"
+                f" {SUPPORTED_GLOBAL_POOLING_MODE}."
             )
 
         aggrs_modules = [SUPPORTED_GLOBAL_POOLING_AGGRS[aggr] for aggr in self.aggrs]
@@ -390,7 +384,7 @@ class MLP(nn.Module):
         else:
             raise ValueError("hidden_layers must be >= 0")
         return p_factors
-    
+
     @property
     def num_of_layers(self) -> int:
         return len(self.linear_layers)
@@ -458,7 +452,9 @@ class GNNModel(nn.Module):
         if self.gnn_num_layers == 0:
             if self.graph_input_feature_dim != self.gnn_output_dim:
                 raise ValueError(
-                    f"You specified gnn_num_layers=0, but (gnn_output_dim={self.gnn_output_dim}) != (graph_input_feature_dim={self.graph_input_feature_dim})."
+                    "You specified gnn_num_layers=0, but"
+                    f" (gnn_output_dim={self.gnn_output_dim}) !="
+                    f" (graph_input_feature_dim={self.graph_input_feature_dim})."
                 )
         if self.gnn_num_layers == 1:
             self.gnn_convs.append(

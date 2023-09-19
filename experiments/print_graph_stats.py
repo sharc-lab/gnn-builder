@@ -1,6 +1,7 @@
-from gnnbuilder.utils import compute_median_nodes_and_edges
-from torch_geometric.datasets import MoleculeNet, QM9
 import pandas as pd
+from torch_geometric.datasets import QM9, MoleculeNet
+
+from gnnbuilder.utils import compute_median_nodes_and_edges
 
 DATASETS = {
     "qm9": QM9(root="./tmp/QM9").index_select(list(range(1000))),

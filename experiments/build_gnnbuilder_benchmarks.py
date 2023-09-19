@@ -1,19 +1,20 @@
+import itertools
+import os
+from pathlib import Path
+
 import joblib
 import numpy as np
-import tqdm
-
-from pathlib import Path
-import os
-import itertools
-
-# from pprint import pp
-
 import torch.nn as nn
-from torch_geometric.datasets import MoleculeNet, QM9
+import tqdm
+from torch_geometric.datasets import QM9, MoleculeNet
 
 import gnnbuilder as gnnb
 from gnnbuilder.code_gen import FPX
 from gnnbuilder.models import MLP
+
+# from pprint import pp
+
+
 
 
 def compute_max_nodes_and_edges(dataset):

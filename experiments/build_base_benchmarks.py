@@ -1,19 +1,17 @@
-import numpy as np
-import pandas as pd
-import tqdm
-
-from pathlib import Path
-import os
 import itertools
+import os
 import subprocess
 import time
+from pathlib import Path
 
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.utils.benchmark as benchmark
-
+import tqdm
+from torch_geometric.datasets import QM9, MoleculeNet
 from torch_geometric.loader import DataLoader
-from torch_geometric.datasets import MoleculeNet, QM9
 
 import gnnbuilder as gnnb
 from gnnbuilder.models import MLP

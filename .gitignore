@@ -1,2 +1,7 @@
 demo_builds/
 __pycache__/
+.env
+.ruff_cache/
+.mypy_cache/
+.vscode/
+tmp/

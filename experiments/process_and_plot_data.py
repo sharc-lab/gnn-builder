@@ -90,12 +90,22 @@ def process_runtime_results(results_dir: Path, figures_dir: Path):
     print(runtime_df_pivot)
     runtime_df_pivot.to_csv("./figures/runtime_results_pivot.csv")
 
-    runtime_df_pivot["fpga_par_speedup_over_pyg_cpu"] = runtime_df_pivot["pyg_cpu"] / runtime_df_pivot["fpga_par"]
-    runtime_df_pivot["fpga_par_speedup_over_pyg_gpu"] = runtime_df_pivot["pyg_gpu"] / runtime_df_pivot["fpga_par"]
-    runtime_df_pivot["fpga_par_speedup_over_cpp_cpu"] = runtime_df_pivot["cpp_cpu"] / runtime_df_pivot["fpga_par"]
+    runtime_df_pivot["fpga_par_speedup_over_pyg_cpu"] = (
+        runtime_df_pivot["pyg_cpu"] / runtime_df_pivot["fpga_par"]
+    )
+    runtime_df_pivot["fpga_par_speedup_over_pyg_gpu"] = (
+        runtime_df_pivot["pyg_gpu"] / runtime_df_pivot["fpga_par"]
+    )
+    runtime_df_pivot["fpga_par_speedup_over_cpp_cpu"] = (
+        runtime_df_pivot["cpp_cpu"] / runtime_df_pivot["fpga_par"]
+    )
 
     runtime_seepup_df = runtime_df_pivot[
-        ["fpga_par_speedup_over_pyg_cpu", "fpga_par_speedup_over_pyg_gpu", "fpga_par_speedup_over_cpp_cpu"]
+        [
+            "fpga_par_speedup_over_pyg_cpu",
+            "fpga_par_speedup_over_pyg_gpu",
+            "fpga_par_speedup_over_cpp_cpu",
+        ]
     ]
     # bottom row is geo mean of columns
     runtime_seepup_df.loc["geomean"] = runtime_seepup_df.apply(
@@ -547,7 +557,7 @@ def process_batch_results(
         for container in ax.containers:
             labels = ax.bar_label(container, fmt="%.2f", fontsize=7, padding=2)
             for label in labels:
-                label.set_bbox(dict(facecolor="white", edgecolor="none", pad=0.1))           
+                label.set_bbox(dict(facecolor="white", edgecolor="none", pad=0.1))
 
         ax.set_axisbelow(True)
         ax.grid(axis="y")
@@ -592,9 +602,6 @@ def process_energy_results(results_dir, results_batch_dir, figures_dir):
     # avaege power over all datasets for each model and batch size
     # energy_df = energy_df.groupby(["model", "runtime_type", "bs"]).mean().reset_index()
     energy_df = energy_df.groupby(["model", "runtime_type"]).mean().reset_index()
-
-    fpga_proxy_model_map = {
-        "gcn": "
 
     print(energy_df)
 

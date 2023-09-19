@@ -1,58 +1,52 @@
+import copy
+import json
+import os
 import pickle
 import random
+from pathlib import Path
+from pprint import pp
 from typing import Any
+
 import matplotlib
-from matplotlib.offsetbox import bbox_artist
-from matplotlib.transforms import Bbox
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 import tqdm
 from joblib import Parallel, delayed
-
-from pathlib import Path
-import os
-from pprint import pp
-import json
-import copy
-
+from matplotlib.offsetbox import bbox_artist
+from matplotlib.transforms import Bbox
+from sklearn.compose import TransformedTargetRegressor
+from sklearn.ensemble import (
+    ExtraTreesRegressor,
+    GradientBoostingRegressor,
+    HistGradientBoostingRegressor,
+    RandomForestRegressor,
+    StackingRegressor,
+    VotingRegressor,
+)
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import (
+    HuberRegressor,
+    LarsCV,
+    Lasso,
+    LassoLarsCV,
+    LinearRegression,
+    RANSACRegressor,
+    Ridge,
+    RidgeCV,
+    SGDRegressor,
+)
+from sklearn.metrics import make_scorer
+from sklearn.model_selection import KFold
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures
+from sklearn.tree import DecisionTreeRegressor
 from torch_geometric.datasets import QM9
 
 import gnnbuilder as gnnb
-
-from sklearn.linear_model import (
-    LinearRegression,
-    Ridge,
-    Lasso,
-    HuberRegressor,
-    RidgeCV,
-    RANSACRegressor,
-    SGDRegressor,
-    LarsCV,
-    LassoLarsCV,
-)
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.preprocessing import PolynomialFeatures, OneHotEncoder
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import (
-    RandomForestRegressor,
-    GradientBoostingRegressor,
-    VotingRegressor,
-    HistGradientBoostingRegressor,
-    ExtraTreesRegressor,
-)
-from sklearn.ensemble import StackingRegressor
-from sklearn.neural_network import MLPRegressor
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import (
-    KFold,
-)
-from sklearn.compose import TransformedTargetRegressor
-
-from sklearn.metrics import make_scorer
-
 
 np.random.seed(0)
 random.seed(0)

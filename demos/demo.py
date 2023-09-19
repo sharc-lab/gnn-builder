@@ -1,27 +1,14 @@
-from functools import partial
+import logging
+import os
+from pathlib import Path
+
 import torch
 import torch.nn as nn
-
-from torch_geometric.nn import GCNConv
-from torch_geometric.datasets import Planetoid
-from torch_geometric.datasets import MoleculeNet
-from torch_geometric.datasets import TUDataset
-from torch_geometric.nn import global_add_pool, global_mean_pool, global_max_pool
-from torch_geometric.loader import DataLoader
-from torch_geometric.utils import degree
-
-import os
-from pprint import pp
-from pathlib import Path
-from collections import Counter
-
-# import tqdm
 from dotenv import dotenv_values
+from torch_geometric.datasets import MoleculeNet
 
 import gnnbuilder as gnnb
 from gnnbuilder.code_gen import FPX
-
-import logging
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -104,7 +91,11 @@ num_nodes_guess, num_edges_guess = gnnb.compute_average_nodes_and_edges(
 
 PROJECT_NAME = "gnn_model"
 VITIS_HLS_PATH = Path("/tools/software/xilinx/Vitis_HLS/2022.2/")
-BUILD_DIR = Path(CURRENT_SCRIPT_DIR / "demo_builds")
+BUILD_DIR_PROJECT = BUILD_DIR / PROJECT_NAME
+
+print(f"Project Name: {PROJECT_NAME}")
+print(f"Vitis HLS Path: {VITIS_HLS_PATH}")
+print(f"Build Directory: {BUILD_DIR_PROJECT}")
 
 
 proj = gnnb.Project(
@@ -112,7 +103,7 @@ proj = gnnb.Project(
     model,
     "classification_integer",
     VITIS_HLS_PATH,
-    BUILD_DIR,
+    BUILD_DIR_PROJECT,
     dataset=dataset,
     max_nodes=MAX_NODES,
     max_edges=MAX_EDGES,
@@ -131,8 +122,8 @@ proj.gen_makefile()
 proj.gen_vitis_hls_tcl_script()
 proj.gen_makefile_vitis()
 
-tb_data = proj.build_and_run_testbench()
-print(tb_data)
+# tb_data = proj.build_and_run_testbench()
+# print(tb_data)
 
-synth_data = proj.run_vitis_hls_synthesis()
-print(synth_data)
+# synth_data = proj.run_vitis_hls_synthesis()
+# print(synth_data)

@@ -1,33 +1,22 @@
-from functools import cached_property
-from importlib.metadata import files
-from optparse import Option
 import os
-from pathlib import Path
 import shutil
 import subprocess
+from functools import cached_property
+from pathlib import Path
 from typing import Optional, Union
 
-from rich.pretty import pprint as pp
 import jinja2
-
 import numpy as np
-
-
 import torch
-import torch.nn as nn
-from torch.nn import Sequential
-from torch_geometric.nn import GCNConv, GINConv, GATConv, PNAConv
-from torch_geometric.data import Data, Dataset, InMemoryDataset
+from torch_geometric.data import Dataset, InMemoryDataset
 
 from .models import GNNModel
 from .utils import (
-    layer_param_name_combiner,
-    read_file,
-    write_file,
-    serialize_tensor,
     extract_data_from_csynth_report,
+    layer_param_name_combiner,
+    serialize_tensor,
+    write_file,
 )
-
 
 CURRENT_DIR = Path(__file__).parent
 GNN_BUILDER_LIB = CURRENT_DIR / "gnn_builder_lib" / "gnn_builder_lib.h"
@@ -64,7 +53,7 @@ class FPX:
 
 SUPPORTED_FPGA_PARTS = [
     "xcu50-fsvh2104-2-e",
-    "xcu280-fsvh2892-2L-e"
+    "xcu280-fsvh2892-2L-e",
     # "xilinx_u280_gen3x16_xdma_1_202211_1"
 ]
 
@@ -338,7 +327,9 @@ class Project:
         for fp in files_to_check:
             if not fp.exists():
                 raise Exception(
-                    f"{self.name} - {fp} does not exist. Make sure you call the gen_<...> functions to generate the model and testbench source code."
+                    f"{self.name} - {fp} does not exist. Make sure you call the"
+                    " gen_<...> functions to generate the model and testbench source"
+                    " code."
                 )
 
         proc_build = subprocess.run(
@@ -393,14 +384,18 @@ class Project:
         for fp in files_to_check:
             if not fp.exists():
                 raise Exception(
-                    f"{self.name} - {fp} does not exist. Make sure you call the gen_<...> functions to generate the model and testbench source code."
+                    f"{self.name} - {fp} does not exist. Make sure you call the"
+                    " gen_<...> functions to generate the model and testbench source"
+                    " code."
                 )
 
         proj_tcl_file = str((self.model_dir / "run_hls.tcl").resolve())
 
         print("Launching HLS synthesis...")
         proc = subprocess.run(
-            ["vitis_hls", proj_tcl_file], cwd=self.model_dir, capture_output=True,
+            ["vitis_hls", proj_tcl_file],
+            cwd=self.model_dir,
+            capture_output=True,
         )
 
         if proc.returncode != 0:
@@ -422,7 +417,9 @@ class Project:
             / f"{self.name}_top_csynth.xml"
         )
         if not synth_report_fp.exists():
-            raise Exception(f"{self.name} - Can't find synthesis report file: {synth_report_fp}")
+            raise Exception(
+                f"{self.name} - Can't find synthesis report file: {synth_report_fp}"
+            )
 
         synth_data = extract_data_from_csynth_report(synth_report_fp)
 
@@ -447,7 +444,8 @@ class Project:
         for fp in files_to_check:
             if not fp.exists():
                 raise Exception(
-                    f"{self.name} - {fp} does not exist. Make sure you call the gen_<...> functions to generate the needed files."
+                    f"{self.name} - {fp} does not exist. Make sure you call the"
+                    " gen_<...> functions to generate the needed files."
                 )
 
         # call the makefile_vitis makefile specificly

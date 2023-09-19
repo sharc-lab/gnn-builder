@@ -1,3 +1,9 @@
 {
-    "esbonio.sphinx.confDir": ""
+    "esbonio.sphinx.confDir": "",
+    "grammarly.selectors": [
+        {
+            "language": "restructuredtext",
+            "scheme": "file"
+        }
+    ]
 }

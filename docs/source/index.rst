@@ -1,49 +1,54 @@
 .. toctree::
    :hidden:
    :maxdepth: 2
-
-   overview
+   
    setup
+   overview
    simple-tutorial
 
 ==========
 GNNBuilder
 ==========
 
-GNNBuilder is a framework for generating FPGA hardware accelerators for graph neural networks (GNNs) using High Level Synthesis (HLS).
+GNNBuilder is a framework for generating FPGA hardware accelerators for graph neural networks (GNNs) using High-Level Synthesis (HLS).
 
 GNNBuilder is developed and maintained by the `Stefan Abi-Karam <https://stefanabikaram.com/>`_ from `Sharc Lab <https://sharclab.ece.gatech.edu/>`_ at `Georgia Tech <https://www.gatech.edu/>`_.
 
 Quick Guide
 ===========
 
-See the sidebar for links to diffetent secitons of the documentation.
+See the sidebar for links to different sections of the documentation.
 
-* :doc:`overview` - Overview of the GNNBuilder framework explaining the different components and how they work together.
 * :doc:`setup` - Instructions for installing and setting up GNNBuilder.
-* :doc:`simple-tutorial` - A simple tutorial for using GNNBuilder to generate a complete GNN accelerator from start to finish incluidng testbench generation, testbench evaluation, HLS Synthesis, IP export for Vivado, IP export for Vitis, bitsretam generation for the Vitis flow, and on-device execution of the GNN acclerator using the Vitis flow and XRT runtime.
+* :doc:`overview` - Overview of the GNNBuilder framework explaining the different components and how they work together.
+* :doc:`simple-tutorial` - A simple tutorial for using GNNBuilder to generate a complete GNN accelerator from start to finish including testbench generation, testbench evaluation, HLS Synthesis, IP export for Vivado, IP export for Vitis, bitstream generation for the Vitis flow, and on-device execution of the GNN accelerator using the Vitis flow and XRT runtime.
 
 
+Source Code
+===========
+
+The source code repository is hosted on GitHub under our Sharc Lab organization:
+
+* `https://github.com/sharc-lab/gnn-builder <https://github.com/sharc-lab/gnn-builder>`_
 
 
-
-Publications and Source Code
-============================
+Publications
+============
 
 GNNBuilder has been published in the following places:
 
-* FPL 2023: Link comming soon...
+* FPL 2023:
+   * Slides: :download:`PDF File <slides/[FPL2023] GNNBuilder - Stefan Abi-Karam.pdf>`
+   * Paper: 
 * ArXiv: `https://arxiv.org/abs/2303.16459 <https://arxiv.org/abs/2303.16459>`_
 * WDDSA 2022 (MICRO Workshop): `https://www.escalab.org/wddsa2022/ <https://www.escalab.org/wddsa2022/>`_
 
-The source code repository is hosted on GitHub:
 
-* `https://github.com/sharc-lab/gnn-builder <https://github.com/sharc-lab/gnn-builder>`_
 
 Citing and Referencing
 ======================
 
-If you use GNNBuilder in your research, please cite the primary FPL 2023 confrence paper:
+If you use GNNBuilder in your research, please cite the primary FPL 2023 conference paper:
 
 .. code-block:: text
    :class: wrap
