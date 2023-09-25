@@ -38,7 +38,7 @@ We have packaged GNNBuilder as both a `pip` package and a `conda` package to str
 To install GNNBuilder using `pip`, run the following command:
 
 ```bash
-pip install gnnbuilder
+pip install git+https://github.com/sharc-lab/gnn-builder.git​
 ```
 
 To install GNNBuilder using `conda` (or equivalent package manager like `mamba`), run the following command:
