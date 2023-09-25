@@ -27,7 +27,7 @@ This framework also provides some simple design space exploration (DSE) tools us
 
 ## Documentation
 
-Comprehensive documentation is available at the following link: TBD.
+Comprehensive documentation is available at the following link: [https://sharc-lab.github.io/gnn-builder/](https://sharc-lab.github.io/gnn-builder/).
 
 You can find information about package installation, setup, demo usage, common use cases, and package API details.
 
