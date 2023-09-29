@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'gnn-builder'
+project = "gnn-builder"
 copyright = "2023, Sharc Lab"
 author = "Sharc Lab"
 
@@ -29,5 +29,5 @@ html_theme = "furo"
 html_static_path = ["_static"]
 
 html_css_files = [
-    'custom.css',
+    "custom.css",
 ]

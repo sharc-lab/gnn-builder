@@ -1,16 +1,16 @@
-import matplotlib
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.ticker as tick
-import seaborn as sns
-
-import os
 import glob
 import itertools
-from pprint import pp
-from pathlib import Path
+import os
 import re
+from pathlib import Path
+from pprint import pp
+
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.ticker as tick
+import numpy as np
+import pandas as pd
+import seaborn as sns
 
 
 def split(strng, sep, pos):

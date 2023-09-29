@@ -1,9 +1,9 @@
-name: pip_install_test
+name: conda_install_test
 
 on: workflow_dispatch
 
 jobs:
-  pip_install_test:
+  codna_install_test:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}

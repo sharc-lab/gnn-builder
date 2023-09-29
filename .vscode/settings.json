@@ -1,9 +1,13 @@
 {
-    "esbonio.sphinx.confDir": "",
+    "esbonio.sphinx.confDir": "{workspaceFolder}/docs/source",
     "grammarly.selectors": [
         {
             "language": "restructuredtext",
             "scheme": "file"
         }
-    ]
+    ],
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    },
 }

@@ -1,0 +1,29 @@
+package:
+  name: gnn-builder
+  version: "0.1.0"
+
+about:
+  home: https://github.com/sharc-lab/gnn-builder
+  license: AGPL-3.0-only
+  
+source:
+  git_url: https://github.com/sharc-lab/gnn-builder.git@master  
+
+build:
+  number: 1
+
+requirements:
+  build:
+    - python=3.10                            # [build_platform != target_platform]
+
+  host:
+    - python=3.10
+    - pip
+
+  run:
+    - python=3.10
+
+test:
+  imports:
+    - gnnbuilder
+

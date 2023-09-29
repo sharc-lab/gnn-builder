@@ -26,9 +26,6 @@ from gnnbuilder.utils import compute_median_degree, compute_median_nodes_and_edg
 # from pprint import pp
 
 
-
-
-
 VITIS_HLS_PATH = Path("/tools/software/xilinx/Vitis_HLS/2022.1/")
 
 

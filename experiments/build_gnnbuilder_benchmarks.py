@@ -15,8 +15,6 @@ from gnnbuilder.models import MLP
 # from pprint import pp
 
 
-
-
 def compute_max_nodes_and_edges(dataset):
     max_node = 0
     max_edge = 0
