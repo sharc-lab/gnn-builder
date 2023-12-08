@@ -77,6 +77,310 @@ def process_runtime_results(results_dir: Path, figures_dir: Path):
     # colum order
     #
 
+    runtime_all_df_pivot = runtime_df.copy().pivot_table(
+        index=["model", "dataset"],
+        values="runtime",
+        columns="runtime_type",
+    )
+    runtime_all_df_pivot.reindex(
+        index=["cpp_cpu", "pyg_cpu", "pyg_gpu", "fpga_base", "fpga_par"]
+    )
+    print(runtime_all_df_pivot)
+
+    speedup_all_df = pd.DataFrame()
+    speedup_all_df["fpga_par_speedup_over_pyg_gpu"] = (
+        runtime_all_df_pivot["pyg_gpu"] / runtime_all_df_pivot["fpga_par"]
+    )
+    speedup_all_df["fpga_par_speedup_over_pyg_cpu"] = (
+        runtime_all_df_pivot["pyg_cpu"] / runtime_all_df_pivot["fpga_par"]
+    )
+    speedup_all_df["fpga_par_speedup_over_cpp_cpu"] = (
+        runtime_all_df_pivot["cpp_cpu"] / runtime_all_df_pivot["fpga_par"]
+    )
+
+    speedup_all_df = speedup_all_df.reindex(
+        columns=[
+            "fpga_par_speedup_over_cpp_cpu",
+            "fpga_par_speedup_over_pyg_cpu",
+            "fpga_par_speedup_over_pyg_gpu",
+        ]
+    )
+
+    # rename the columns
+    speedup_all_df = speedup_all_df.rename(
+        columns={
+            "fpga_par_speedup_over_cpp_cpu": "CPP-CPU",
+            "fpga_par_speedup_over_pyg_cpu": "PYG-CPU",
+            "fpga_par_speedup_over_pyg_gpu": "PYG-GPU",
+        }
+    )
+
+    # rename the multiindex
+    speedup_all_df.index = speedup_all_df.index.rename(
+        {"model": "Model", "dataset": "Dataset"}
+    )
+
+    speedup_all_df_latex = speedup_all_df.to_latex(
+        float_format="{:0.2f}x".format,
+        multicolumn_format="c",
+        column_format="c | ccc",
+        caption="FPGA-PAR Runtime speedup over PyG CPU, PyG GPU, and C++ CPU runtimes.",
+        label="tab:runtime_speedup",
+        escape=True,
+        sparsify=True,
+    )
+    print()
+    print(speedup_all_df_latex)
+    print()
+    latex_output_file = figures_dir / "speedup_all.tex"
+    latex_output_file.write_text(speedup_all_df_latex)
+
+    speedup_all_df.to_csv(figures_dir / "speedup_all.csv")
+    speedup_all_df.to_excel(figures_dir / "speedup_all.xlsx")
+
+    # exit()
+
+    speedup_min_max_df = speedup_all_df.copy().groupby(["Model"]).agg(["min", "max"])
+    # merge the min and max columns for each type so that the rows hold a [min, max] list, the multiindex is (implementaion, agg)
+
+    speedup_min_max_df.to_csv(figures_dir / "speedup_min_max.csv")
+    speedup_min_max_df.to_excel(figures_dir / "speedup_min_max.xlsx")
+
+    speedup_min_max_df["fpga_par_speedup_over_cpp_cpu_min_max"] = speedup_min_max_df[
+        [
+            ("CPP-CPU", "min"),
+            ("CPP-CPU", "max"),
+        ]
+    ].values.tolist()
+    speedup_min_max_df["fpga_par_speedup_over_pyg_cpu_min_max"] = speedup_min_max_df[
+        [
+            ("PYG-CPU", "min"),
+            ("PYG-CPU", "max"),
+        ]
+    ].values.tolist()
+    speedup_min_max_df["fpga_par_speedup_over_pyg_gpu_min_max"] = speedup_min_max_df[
+        [
+            ("PYG-GPU", "min"),
+            ("PYG-GPU", "max"),
+        ]
+    ].values.tolist()
+
+    speedup_min_max_df = speedup_min_max_df.drop(
+        columns=[
+            ("CPP-CPU", "min"),
+            ("CPP-CPU", "max"),
+            ("PYG-CPU", "min"),
+            ("PYG-CPU", "max"),
+            ("PYG-GPU", "min"),
+            ("PYG-GPU", "max"),
+        ]
+    )
+
+    # rename the columns
+    speedup_min_max_df = speedup_min_max_df.rename(
+        columns={
+            "fpga_par_speedup_over_cpp_cpu_min_max": "CPP-CPU",
+            "fpga_par_speedup_over_pyg_cpu_min_max": "PYG-CPU",
+            "fpga_par_speedup_over_pyg_gpu_min_max": "PYG-GPU",
+        }
+    )
+
+    speedup_min_max_df.columns = [
+        c[0] for c in speedup_min_max_df.columns.to_flat_index()
+    ]
+
+    def min_max_formatter(x):
+        return f"{x[0]:.2f}-{x[1]:.2f} x"
+
+    speedup_min_max_df_latex = speedup_min_max_df.to_latex(
+        formatters=[min_max_formatter] * 3,
+        multicolumn_format="c",
+        column_format="c | ccc",
+        caption="FPGA-PAR Runtime speedup over PyG CPU, PyG GPU, and C++ CPU runtimes.",
+        label="tab:runtime_speedup",
+        escape=True,
+        sparsify=True,
+    )
+    print()
+    print(speedup_min_max_df_latex)
+    print()
+
+    latex_output_file = figures_dir / "speedup_min_max.tex"
+    latex_output_file.write_text(speedup_min_max_df_latex)
+
+    fig = plt.figure(figsize=(5, 4))
+    ax = fig.add_subplot(1, 1, 1)
+
+    model_rename = {
+        "gcn": "GCN",
+        "gin": "GIN",
+        "pna": "PNA",
+        "sage": "SAGE",
+    }
+
+    models = speedup_min_max_df.index.to_list()
+    models = [model_rename[m] for m in models]
+    implementations = speedup_min_max_df.columns
+
+    colors = ["#95d5b2", "#90e0ef", "#00b4d8"]
+
+    x = np.arange(len(models))  # the label locations
+    width = 0.2  # the width of the bars
+    with_factor = 0.9
+    multiplier = 0
+
+    for i, col in enumerate(implementations):
+        col_values = speedup_min_max_df[col].to_list()
+        min_values = [x[0] for x in col_values]
+        max_values = [x[1] for x in col_values]
+
+        offset = width * multiplier
+        # make a vertical bar plot but start at min_values and end at max_values
+        ax.bar(
+            x + offset,
+            max_values,
+            width * with_factor,
+            bottom=min_values,
+            label=col,
+            color=colors[i],
+        )
+        multiplier += 1
+
+    ax.set_xlabel("GNN Model")
+    ax.set_xticks(x + width, models)
+
+    # get defualt xlim
+    xlim_min, xlim_max = ax.get_xlim()
+    ax.set_xlim(xlim_min, xlim_max)
+    ax.hlines(1, xlim_min, xlim_max, colors="gray", linestyles="dashed")
+
+    ax.set_ylabel("Speedup ($\\times$)")
+    ax.set_ylim(0.25, 21)
+    ax.set_yticks(np.arange(1, 21, 1))
+
+    # draw horizontal grid lines
+    ax.set_axisbelow(True)
+    ax.yaxis.grid(True, linestyle="-", which="major", color="lightgrey", alpha=0.5)
+
+    ax.legend()
+    ax.set_title("FPGA-PAR Runtime Speedup")
+
+    plt.tight_layout()
+
+    figure_path = figures_dir / "speedup_min_max.png"
+    plt.savefig(figure_path, dpi=300)
+    plt.close()
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    exit()
+
+    # print(runtime_df_pivot_range)
+    # print(runtime_df_pivot_range.columns)
+
+    # speedup_df = pd.DataFrame()
+    # # speedup_df["model"] = runtime_df_pivot_range.index.get_level_values(0)
+    # # speedup_df["dataset"] = runtime_df_pivot_range.index.get_level_values(1)
+    # speedup_df["fpga_par_speedup_over_pyg_cpu_min"] = (
+    #     runtime_df_pivot_range["min"]["pyg_cpu"]
+    #     / runtime_df_pivot_range["max"]["fpga_par"]
+    # )
+    # speedup_df["fpga_par_speedup_over_pyg_gpu_min"] = (
+    #     runtime_df_pivot_range["min"]["pyg_gpu"]
+    #     / runtime_df_pivot_range["max"]["fpga_par"]
+    # )
+    # speedup_df["fpga_par_speedup_over_cpp_cpu_min"] = (
+    #     runtime_df_pivot_range["min"]["cpp_cpu"]
+    #     / runtime_df_pivot_range["max"]["fpga_par"]
+    # )
+    # speedup_df["fpga_par_speedup_over_pyg_cpu_max"] = (
+    #     runtime_df_pivot_range["max"]["pyg_cpu"]
+    #     / runtime_df_pivot_range["min"]["fpga_par"]
+    # )
+    # speedup_df["fpga_par_speedup_over_pyg_gpu_max"] = (
+    #     runtime_df_pivot_range["max"]["pyg_gpu"]
+    #     / runtime_df_pivot_range["min"]["fpga_par"]
+    # )
+    # speedup_df["fpga_par_speedup_over_cpp_cpu_max"] = (
+    #     runtime_df_pivot_range["max"]["cpp_cpu"]
+    #     / runtime_df_pivot_range["min"]["fpga_par"]
+    # )
+
+    # speedup_df = speedup_df.reindex(
+    #     columns=[
+    #         "fpga_par_speedup_over_cpp_cpu_min",
+    #         "fpga_par_speedup_over_cpp_cpu_max",
+    #         "fpga_par_speedup_over_pyg_cpu_min",
+    #         "fpga_par_speedup_over_pyg_cpu_max",
+    #         "fpga_par_speedup_over_pyg_gpu_min",
+    #         "fpga_par_speedup_over_pyg_gpu_max",
+    #     ]
+    # )
+
+    # # print(speedup_df)
+
+    # # speedup_df = speedup_df.reorder_levels(["dataset", "model"], axis=0)
+    # print(speedup_df)
+    # # combine the min and max columns for each type so that the rows hold a [min, max] list
+    # speedup_df["fpga_par_speedup_over_cpp_cpu_min_max"] = speedup_df[
+    #     [
+    #         "fpga_par_speedup_over_cpp_cpu_min",
+    #         "fpga_par_speedup_over_cpp_cpu_max",
+    #     ]
+    # ].values.tolist()
+    # speedup_df["fpga_par_speedup_over_pyg_cpu_min_max"] = speedup_df[
+    #     [
+    #         "fpga_par_speedup_over_pyg_cpu_min",
+    #         "fpga_par_speedup_over_pyg_cpu_max",
+    #     ]
+    # ].values.tolist()
+    # speedup_df["fpga_par_speedup_over_pyg_gpu_min_max"] = speedup_df[
+    #     [
+    #         "fpga_par_speedup_over_pyg_gpu_min",
+    #         "fpga_par_speedup_over_pyg_gpu_max",
+    #     ]
+    # ].values.tolist()
+
+    # speedup_df = speedup_df.drop(
+    #     columns=[
+    #         "fpga_par_speedup_over_cpp_cpu_min",
+    #         "fpga_par_speedup_over_cpp_cpu_max",
+    #         "fpga_par_speedup_over_pyg_cpu_min",
+    #         "fpga_par_speedup_over_pyg_cpu_max",
+    #         "fpga_par_speedup_over_pyg_gpu_min",
+    #         "fpga_par_speedup_over_pyg_gpu_max",
+    #     ]
+    # )
+
+    # # rename the columns
+    # speedup_df = speedup_df.rename(
+    #     columns={
+    #         "fpga_par_speedup_over_cpp_cpu_min_max": "CPP-CPU",
+    #         "fpga_par_speedup_over_pyg_cpu_min_max": "PYG-CPU",
+    #         "fpga_par_speedup_over_pyg_gpu_min_max": "PYG-GPU",
+    #     }
+    # )
+
+    # # rename the multiindex
+    # speedup_df.index = speedup_df.index.rename({"model": "Model", "dataset": "Dataset"})
+
+    # print(speedup_df)
+
+    # min_max_formatter = lambda x: f"{x[0]:.2f}-{x[1]:.2f} x"
+
+    # latex_table = speedup_df.to_latex(
+    #     formatters=[min_max_formatter] * 3,
+    #     multicolumn_format="c",
+    #     column_format="c | ccc",
+    #     caption="FPGA-PAR Runtime speedup over PyG CPU, PyG GPU, and C++ CPU runtimes.",
+    #     label="tab:runtime_speedup",
+    #     escape=True,
+    #     sparsify=True,
+    # )
+    # print()
+    # print(latex_table)
+    # print()
+    # exit()
+
     # pivot table
     # rows are models
     # cols are runtime_type
@@ -692,6 +996,7 @@ if __name__ == "__main__":
     os.makedirs(FIGURES_TESTING_DIR, exist_ok=True)
 
     process_runtime_results(RESULTS_TESTING_DIR, FIGURES_TESTING_DIR)
-    process_resource_results(RESULTS_TESTING_DIR, FIGURES_TESTING_DIR)
+    # process_resource_results(RESULTS_TESTING_DIR, FIGURES_TESTING_DIR)
+
     # process_batch_results(RESULTS_TESTING_DIR, RESULTS_BATCH_DIR, FIGURES_TESTING_DIR)
     # process_energy_results(RESULTS_TESTING_DIR, RESULTS_BATCH_DIR, FIGURES_TESTING_DIR)

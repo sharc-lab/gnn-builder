@@ -1,0 +1,35 @@
+\begin{table}
+\caption{FPGA-PAR Runtime speedup over PyG CPU, PyG GPU, and C++ CPU runtimes.}
+\label{tab:runtime_speedup}
+\begin{tabular}{c | ccc}
+\toprule
+ &  & CPP-CPU & PYG-CPU & PYG-GPU \\
+Model & Dataset &  &  &  \\
+\midrule
+\multirow[t]{5}{*}{gcn} & esol & 1.99x & 5.15x & 6.33x \\
+ & freesolv & 1.91x & 7.40x & 9.26x \\
+ & hiv & 2.02x & 3.40x & 4.14x \\
+ & lipo & 1.75x & 2.36x & 2.82x \\
+ & qm9 & 2.17x & 5.93x & 7.29x \\
+\cline{1-5}
+\multirow[t]{5}{*}{gin} & esol & 2.15x & 3.55x & 3.86x \\
+ & freesolv & 2.09x & 5.14x & 5.72x \\
+ & hiv & 2.16x & 2.36x & 2.53x \\
+ & lipo & 1.91x & 1.65x & 1.77x \\
+ & qm9 & 2.14x & 3.84x & 4.23x \\
+\cline{1-5}
+\multirow[t]{5}{*}{pna} & esol & 10.80x & 3.93x & 4.05x \\
+ & freesolv & 10.31x & 5.42x & 5.87x \\
+ & hiv & 10.90x & 2.72x & 2.70x \\
+ & lipo & 9.57x & 1.97x & 1.93x \\
+ & qm9 & 11.17x & 4.34x & 4.65x \\
+\cline{1-5}
+\multirow[t]{5}{*}{sage} & esol & 4.67x & 4.17x & 4.78x \\
+ & freesolv & 4.51x & 5.94x & 6.83x \\
+ & hiv & 4.52x & 2.76x & 3.18x \\
+ & lipo & 4.18x & 1.94x & 2.38x \\
+ & qm9 & 4.72x & 4.63x & 5.47x \\
+\cline{1-5}
+\bottomrule
+\end{tabular}
+\end{table}
