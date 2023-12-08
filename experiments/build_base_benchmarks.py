@@ -367,9 +367,9 @@ def compute_pyg_gpu_benchmark(
 
 
 if __name__ == "__main__":
-    RESULTS_DIR = Path("./results_batch")
+    RESULTS_DIR = Path("./results_testing")
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
-    # compute_pyg_cpu_benchmark(combos, RESULTS_DIR, trials=5, batch_size=1, cpu_idx=0)
-    # compute_pyg_gpu_benchmark(combos, RESULTS_DIR, trials=5, batch_size=1, gpu_idx=2)
-    # compute_pyg_gpu_benchmark(combos, RESULTS_DIR, trials=5, batch_size=4, gpu_idx=2)
+    compute_pyg_cpu_benchmark(combos, RESULTS_DIR, trials=5, batch_size=1, cpu_idx=0)
+    compute_pyg_gpu_benchmark(combos, RESULTS_DIR, trials=5, batch_size=1, gpu_idx=2)
+    compute_pyg_gpu_benchmark(combos, RESULTS_DIR, trials=5, batch_size=4, gpu_idx=2)

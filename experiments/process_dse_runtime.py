@@ -185,12 +185,12 @@ if __name__ == "__main__":
     data_for_plotting_vitis["vitis_tool_runtime_cumsum"] = data_for_plotting_vitis[
         "vitis_tool_runtime"
     ].cumsum()
-    data_for_plotting_sklearn["sklearn_latency_infrence_time_cumsum"] = (
-        data_for_plotting_sklearn["sklearn_latency_infrence_time"].cumsum()
-    )
-    data_for_plotting_sklearn["sklearn_bram_infrence_time_cumsum"] = (
-        data_for_plotting_sklearn["sklearn_bram_infrence_time"].cumsum()
-    )
+    data_for_plotting_sklearn[
+        "sklearn_latency_infrence_time_cumsum"
+    ] = data_for_plotting_sklearn["sklearn_latency_infrence_time"].cumsum()
+    data_for_plotting_sklearn[
+        "sklearn_bram_infrence_time_cumsum"
+    ] = data_for_plotting_sklearn["sklearn_bram_infrence_time"].cumsum()
 
     average_vitis_tool_runtime = data_for_plotting_vitis["vitis_tool_runtime"].mean()
     average_sklearn_latency_infrence_time = data_for_plotting_sklearn[

@@ -32,6 +32,7 @@ MODEL_CC_TEMPLATE = template_env.get_template("model.cpp.jinja")
 MODEL_TB_TEMPLATE = template_env.get_template("model_tb.cpp.jinja")
 MAKEFILE_TEMPLATE = template_env.get_template("makefile_testbench.jinja")
 RUN_HLS_TEMPLATE = template_env.get_template("run_hls.tcl.jinja")
+RUN_HLS_COSIM_TEMPLATE = template_env.get_template("run_hls_cosim.tcl.jinja")
 MAKEFILE_VITIS_TEMPLATE = template_env.get_template("makefile_vitis.jinja")
 
 
@@ -77,6 +78,7 @@ class Project:
         clock_speed: float = 3.33,
         fpga_part: str = "xcu50-fsvh2104-2-e",
         n_jobs: int = 1,
+        cosim_wave_debug: bool = False,
     ):
         self.model = model
         self.dataset = dataset
@@ -127,6 +129,8 @@ class Project:
         self.n_jobs = n_jobs
         if self.n_jobs <= 0:
             raise ValueError("n_jobs must be > 0")
+
+        self.cosim_wave_debug = cosim_wave_debug
 
     def validate_project(self):
         if self.name is None:
@@ -189,6 +193,8 @@ class Project:
         template_dict["fpga_part"] = self.fpga_part
 
         template_dict["n_jobs"] = self.n_jobs
+
+        template_dict["cosim_wave_debug"] = self.cosim_wave_debug
 
         return template_dict
 
@@ -315,6 +321,20 @@ class Project:
 
         vitis_hls_tcl_script_template_render = RUN_HLS_TEMPLATE.render(template_dict)
         write_file(self.model_dir / "run_hls.tcl", vitis_hls_tcl_script_template_render)
+
+    def gen_vitis_hls_cosim_tcl_script(self):
+        os.makedirs(self.build_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
+
+        template_dict = self.template_dict
+
+        vitis_hls_cosim_tcl_script_template_render = RUN_HLS_COSIM_TEMPLATE.render(
+            template_dict
+        )
+        write_file(
+            self.model_dir / "run_hls_cosim.tcl",
+            vitis_hls_cosim_tcl_script_template_render,
+        )
 
     def build_and_run_testbench(self):
         files_to_check = [

@@ -1,3 +1,9 @@
+{# cpp array decleration #}
+{% macro array_decleration(name, type, shape) -%}
+{{type}} {{name}}{% for dim in shape %}[{{ dim }}]{% endfor %};
+{% endmacro %}
+
+
 {% macro gcn_conv(
     MAX_NODES,
     MAX_EDGES,

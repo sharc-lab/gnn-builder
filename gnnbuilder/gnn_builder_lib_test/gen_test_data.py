@@ -7,7 +7,15 @@ import numpy as np
 import torch
 from torch_geometric.utils import from_networkx
 
-from gnnbuilder import GCNConv_GNNB, GINConv_GNNB, PNAConv_GNNB, SAGEConv_GNNB
+from gnnbuilder import (
+    GCNConv_GNNB,
+    GINConv_GNNB,
+    GINEConv_GNNB,
+    LGConv_GNNB,
+    PNAConv_GNNB,
+    SAGEConv_GNNB,
+    SimpleConv_GNNB,
+)
 from gnnbuilder.utils import compute_in_deg_histogram
 
 
@@ -72,6 +80,7 @@ def gen_graph_data(test_data_dir: Path, seed=0):
     MAX_EDGES = 1000
 
     INPUT_NODE_FEATURE_SIZE = 8
+    INPUT_EDGE_FEATURE_SIZE = 16
 
     coo_matrix = np.zeros((MAX_EDGES, 2), dtype=np.int64)
 
@@ -83,6 +92,11 @@ def gen_graph_data(test_data_dir: Path, seed=0):
             (np.random.rand(INPUT_NODE_FEATURE_SIZE) * 2) - 1
         ).astype(np.float32)
 
+    for edge in G.edges():
+        G.edges[edge]["edge_feature_array"] = (
+            (np.random.rand(INPUT_EDGE_FEATURE_SIZE) * 2) - 1
+        ).astype(np.float32)
+
     num_nodes = G.number_of_nodes()
     num_edges = G.number_of_edges()
     print(f"num_nodes: {num_nodes}")
@@ -91,7 +105,8 @@ def gen_graph_data(test_data_dir: Path, seed=0):
     assert num_nodes <= MAX_NODES
     assert num_edges <= MAX_EDGES
 
-    coo_matrix = np.array(list(G.edges()))
+    edges_list = list(G.edges())
+    coo_matrix = np.array(edges_list)
 
     in_degree_table = np.array(list(dict(G.in_degree(G.nodes())).values()))
     out_degree_table = np.array(list(dict(G.out_degree(G.nodes())).values()))
@@ -102,33 +117,101 @@ def gen_graph_data(test_data_dir: Path, seed=0):
     )
     node_offsets_copy = neighbor_table_offsets.copy()
     neighbor_table = np.zeros(num_edges, dtype=np.int64)
+    edge_index_table = np.zeros(num_edges, dtype=np.int64)
     for e in range(num_edges):
         n_from = coo_matrix[e, 0]
         n_to = coo_matrix[e, 1]
         n_to_offset = node_offsets_copy[n_to]
         neighbor_table[int(n_to_offset)] = n_from
+        edge_index_table[int(n_to_offset)] = e
         node_offsets_copy[n_to] += 1
 
+    # check for correctness of neighbor_table and neighbor_table_offsets
     for node_id in range(num_nodes):
         coo_slice = coo_matrix[coo_matrix[:, 1] == node_id][:, 0]
         set_0 = set(coo_slice.tolist())
+
         neighbor_table_slice = neighbor_table[
             neighbor_table_offsets[node_id] : neighbor_table_offsets[node_id]
             + in_degree_table[node_id]
         ]
         set_1 = set(neighbor_table_slice.tolist())
+
         in_nodes = list(G.predecessors(node_id))
         set_2 = set(in_nodes)
+
+        # print(f"set_0: {set_0}")
+        # print(f"set_1: {set_1}")
+        # print(f"set_2: {set_2}")
+
         check = set_0 == set_1 == set_2
         if not check:
             raise ValueError("Neighbor table computation not correct")
 
-    pyg_graph = from_networkx(G, group_node_attrs=["node_feature_array"])
-    input_node_features = pyg_graph.x.detach().numpy()
-    # print("input_node_features")
-    # print(input_node_features)
+    # check for correctness of edge_index_table
+    for node_id in range(num_nodes):
+        coo_slice_edges = coo_matrix[:, 1] == node_id
+        non_zero_indexes = np.nonzero(coo_slice_edges)[0]
+        set_0 = set(non_zero_indexes.tolist())
 
-    OUTPUT_FEATURE_SIZE = 16
+        edge_index_table_slice = edge_index_table[
+            neighbor_table_offsets[node_id] : neighbor_table_offsets[node_id]
+            + in_degree_table[node_id]
+        ]
+        set_1 = set(edge_index_table_slice.tolist())
+
+        in_edges = list(G.in_edges(node_id))
+        in_edges_index = [edges_list.index(edge) for edge in in_edges]
+        set_2 = set(in_edges_index)
+
+        # print(f"set_0: {set_0}")
+        # print(f"set_1: {set_1}")
+        # print(f"set_2: {set_2}")
+
+        check = set_0 == set_1 == set_2
+        if not check:
+            raise ValueError("Edge index table computation not correct")
+
+    for node_id in range(num_nodes):
+        # print this info
+        # node 99
+        # current_node_embedding_in
+        # [ 0.19287, -0.76495,  0.95177 ... -0.51564, -0.49920, -0.03321]
+        # num_in_neighbors 4
+        # neighbors
+        # 10 20 34 35
+        # neighbor_edge_indexs
+        # 74 134 203 207
+
+        print(f"node {node_id}")
+        print("current_node_embedding_in")
+        print(G.nodes[node_id]["node_feature_array"])
+        print(f"num_in_neighbors {in_degree_table[node_id]}")
+        print("neighbors")
+        print(
+            neighbor_table[
+                neighbor_table_offsets[node_id] : neighbor_table_offsets[node_id]
+                + in_degree_table[node_id]
+            ]
+        )
+        print("neighbor_edge_indexs")
+        print(
+            edge_index_table[
+                neighbor_table_offsets[node_id] : neighbor_table_offsets[node_id]
+                + in_degree_table[node_id]
+            ]
+        )
+        print()
+
+    pyg_graph = from_networkx(
+        G,
+        group_node_attrs=["node_feature_array"],
+        group_edge_attrs=["edge_feature_array"],
+    )
+    input_node_features = pyg_graph.x.detach().numpy()
+    input_edge_features = pyg_graph.edge_attr.detach().numpy()
+
+    OUTPUT_FEATURE_SIZE = 8
 
     # GCN
     gcn_layer = GCNConv_GNNB(INPUT_NODE_FEATURE_SIZE, OUTPUT_FEATURE_SIZE)
@@ -138,7 +221,7 @@ def gen_graph_data(test_data_dir: Path, seed=0):
     gcn_output = gcn_layer(pyg_graph.x, pyg_graph.edge_index).detach().numpy()
 
     # GIN
-    GIN_HIDDEN_FEATURE_SIZE = 64
+    GIN_HIDDEN_FEATURE_SIZE = OUTPUT_FEATURE_SIZE
     GIN_EPS = 0.2
 
     gin_layer = GINConv_GNNB(
@@ -155,12 +238,54 @@ def gen_graph_data(test_data_dir: Path, seed=0):
 
     gin_output = gin_layer(pyg_graph.x, pyg_graph.edge_index).detach().numpy()
 
+    # GIN-E
+    GINE_HIDDEN_FEATURE_SIZE = OUTPUT_FEATURE_SIZE
+    GINE_EPS = 0.2
+    gine_layer = GINEConv_GNNB(
+        INPUT_NODE_FEATURE_SIZE,
+        OUTPUT_FEATURE_SIZE,
+        INPUT_EDGE_FEATURE_SIZE,
+        hidden_dim=GINE_HIDDEN_FEATURE_SIZE,
+        eps=GINE_EPS,
+    )
+
+    gine_mlp_0_weights = gine_layer.mlp.linear_0.weight.detach().numpy()
+    gine_mlp_0_bias = gine_layer.mlp.linear_0.bias.detach().numpy()
+    gine_mlp_1_weights = gine_layer.mlp.linear_1.weight.detach().numpy()
+    gine_mlp_1_bias = gine_layer.mlp.linear_1.bias.detach().numpy()
+
+    gine_edge_proj_weights = gine_layer.conv.lin.weight.detach().numpy()
+    gine_edge_proj_bias = gine_layer.conv.lin.bias.detach().numpy()
+
+    gine_output = (
+        gine_layer(pyg_graph.x, pyg_graph.edge_index, pyg_graph.edge_attr)
+        .detach()
+        .numpy()
+    )
+
+    # print("gine_mlp_0_weights:")
+    # print(gine_mlp_0_weights)
+    # print("gine_mlp_0_bias:")
+    # print(gine_mlp_0_bias)
+    # print("gine_mlp_1_weights:")
+    # print(gine_mlp_1_weights)
+    # print("gine_mlp_1_bias:")
+    # print(gine_mlp_1_bias)
+    # print("gine_edge_proj_weights:")
+    # print(gine_edge_proj_weights)
+    # print("gine_edge_proj_bias:")
+    # print(gine_edge_proj_bias)
+
     # PNA
     deg = compute_in_deg_histogram([pyg_graph])
-    pna_layer = PNAConv_GNNB(INPUT_NODE_FEATURE_SIZE, OUTPUT_FEATURE_SIZE, deg)
+    deg_avg = torch.mean(deg, dtype=torch.float32).item()
+
+    pna_layer = PNAConv_GNNB(
+        INPUT_NODE_FEATURE_SIZE, OUTPUT_FEATURE_SIZE, delta=deg_avg
+    )
 
     pna_avg_degree_log = pna_layer.delta_scaler
-    print(f"pna_avg_degree_log: {pna_avg_degree_log}")
+    # print(f"pna_avg_degree_log: {pna_avg_degree_log}")
 
     pna_transform_lin = pna_layer.conv.pre_nns[0][0]
     pna_transform_lin_weights = pna_transform_lin.weight.detach().numpy()
@@ -182,6 +307,14 @@ def gen_graph_data(test_data_dir: Path, seed=0):
     sage_neighbor_lin_bias = sage_layer.conv.lin_l.bias.detach().numpy()
     sage_self_lin_weights = sage_layer.conv.lin_r.weight.detach().numpy()
     sage_output = sage_layer(pyg_graph.x, pyg_graph.edge_index).detach().numpy()
+
+    # LGConv
+    lgconv_layer = LGConv_GNNB(INPUT_NODE_FEATURE_SIZE, OUTPUT_FEATURE_SIZE)
+    lgconv_output = lgconv_layer(pyg_graph.x, pyg_graph.edge_index).detach().numpy()
+
+    # SimpleConv
+    simple_layer = SimpleConv_GNNB(INPUT_NODE_FEATURE_SIZE, OUTPUT_FEATURE_SIZE)
+    simple_output = simple_layer(pyg_graph.x, pyg_graph.edge_index).detach().numpy()
 
     ##############
 
@@ -243,6 +376,13 @@ def gen_graph_data(test_data_dir: Path, seed=0):
         neighbor_table, Path(test_data_dir / "tb_neighbor_table.bin"), np_type=np.int32
     )
 
+    np.savetxt(test_data_dir / "tb_edge_index_table.txt", edge_index_table, fmt="%d")
+    serialize_numpy(
+        edge_index_table,
+        Path(test_data_dir / "tb_edge_index_table.bin"),
+        np_type=np.int32,
+    )
+
     np.savetxt(
         test_data_dir / "tb_input_node_feature_size.txt",
         [INPUT_NODE_FEATURE_SIZE],
@@ -259,6 +399,25 @@ def gen_graph_data(test_data_dir: Path, seed=0):
     serialize_numpy(
         input_node_features,
         Path(test_data_dir / "tb_input_node_features.bin"),
+        np_type=np.float32,
+    )
+
+    np.savetxt(
+        test_data_dir / "tb_input_edge_feature_size.txt",
+        [INPUT_EDGE_FEATURE_SIZE],
+        fmt="%d",
+    )
+    np.savetxt(
+        test_data_dir / "tb_input_edge_features.txt", input_edge_features, fmt="%.20f"
+    )
+    serialize_numpy(
+        np.array([INPUT_EDGE_FEATURE_SIZE]),
+        Path(test_data_dir / "tb_input_edge_feature_size.bin"),
+        np_type=np.int32,
+    )
+    serialize_numpy(
+        input_edge_features,
+        Path(test_data_dir / "tb_input_edge_features.bin"),
         np_type=np.float32,
     )
 
@@ -318,6 +477,55 @@ def gen_graph_data(test_data_dir: Path, seed=0):
         gin_output, Path(test_data_dir / "tb_gin_output.bin"), np_type=np.float32
     )
 
+    np.savetxt(
+        test_data_dir / "tb_gine_hidden_feature_size.txt",
+        [GINE_HIDDEN_FEATURE_SIZE],
+        fmt="%d",
+    )
+    serialize_numpy(
+        np.array([GINE_HIDDEN_FEATURE_SIZE]),
+        Path(test_data_dir / "tb_gine_hidden_feature_size.bin"),
+        np_type=np.int32,
+    )
+    serialize_numpy(
+        gine_mlp_0_weights,
+        Path(test_data_dir / "tb_gine_mlp_0_weights.bin"),
+        np_type=np.float32,
+    )
+    serialize_numpy(
+        gine_mlp_0_bias,
+        Path(test_data_dir / "tb_gine_mlp_0_bias.bin"),
+        np_type=np.float32,
+    )
+    serialize_numpy(
+        gine_mlp_1_weights,
+        Path(test_data_dir / "tb_gine_mlp_1_weights.bin"),
+        np_type=np.float32,
+    )
+    serialize_numpy(
+        gine_mlp_1_bias,
+        Path(test_data_dir / "tb_gine_mlp_1_bias.bin"),
+        np_type=np.float32,
+    )
+    serialize_numpy(
+        gine_edge_proj_weights,
+        Path(test_data_dir / "tb_gine_edge_proj_weights.bin"),
+        np_type=np.float32,
+    )
+    serialize_numpy(
+        gine_edge_proj_bias,
+        Path(test_data_dir / "tb_gine_edge_proj_bias.bin"),
+        np_type=np.float32,
+    )
+    serialize_numpy(
+        np.array([GINE_EPS]),
+        Path(test_data_dir / "tb_gine_eps.bin"),
+        np_type=np.float32,
+    )
+    serialize_numpy(
+        gine_output, Path(test_data_dir / "tb_gine_output.bin"), np_type=np.float32
+    )
+
     serialize_numpy(
         np.array(pna_avg_degree_log),
         Path(test_data_dir / "tb_pna_avg_degree_log.bin"),
@@ -374,6 +582,14 @@ def gen_graph_data(test_data_dir: Path, seed=0):
     )
     serialize_numpy(
         sage_output, test_data_dir / Path("tb_sage_output.bin"), np_type=np.float32
+    )
+
+    serialize_numpy(
+        lgconv_output, test_data_dir / Path("tb_lgconv_output.bin"), np_type=np.float32
+    )
+
+    serialize_numpy(
+        simple_output, test_data_dir / Path("tb_simple_output.bin"), np_type=np.float32
     )
 
 

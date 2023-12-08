@@ -45,6 +45,7 @@ torch.manual_seed(0)
 dataset = MoleculeNet(root="./tmp/MoleculeNet", name="hiv").index_select(
     list(range(1000))
 )
+
 print(dataset)
 print(f"dataset.num_classes={dataset.num_classes}")
 print(f"dataset.num_features={dataset.num_features}")
@@ -59,27 +60,27 @@ print(f"dataset_average_degree={dataset_average_degree}")
 model = gnnb.GNNModel(
     graph_input_feature_dim=dataset.num_features,
     graph_input_edge_dim=dataset.num_edge_features,
-    gnn_hidden_dim=16,
-    gnn_num_layers=2,
-    gnn_output_dim=8,
+    gnn_hidden_dim=128,
+    gnn_num_layers=6,
+    gnn_output_dim=64,
     gnn_conv=gnnb.SAGEConv_GNNB,
     gnn_activation=nn.ReLU,
     gnn_skip_connection=True,
     global_pooling=gnnb.GlobalPooling(["add", "mean", "max"]),
     mlp_head=gnnb.MLP(
-        in_dim=8 * 3,
+        in_dim=64 * 3,
         out_dim=dataset.num_classes,
-        hidden_dim=8,
-        hidden_layers=3,
+        hidden_dim=64,
+        hidden_layers=4,
         activation=nn.ReLU,
         p_in=8,
-        p_hidden=4,
+        p_hidden=8,
         p_out=1,
     ),
     output_activation=None,
     gnn_p_in=1,
-    gnn_p_hidden=8,
-    gnn_p_out=4,
+    gnn_p_hidden=16,
+    gnn_p_out=8,
 )
 
 MAX_NODES = 600
@@ -90,7 +91,7 @@ num_nodes_guess, num_edges_guess = gnnb.compute_average_nodes_and_edges(
 )
 
 PROJECT_NAME = "gnn_model"
-VITIS_HLS_PATH = Path("/tools/software/xilinx/Vitis_HLS/2022.2/")
+VITIS_HLS_PATH = Path("/tools/software/xilinx/Vitis_HLS/2023.1/")
 BUILD_DIR_PROJECT = BUILD_DIR / PROJECT_NAME
 
 print(f"Project Name: {PROJECT_NAME}")
@@ -111,19 +112,21 @@ proj = gnnb.Project(
     num_edges_guess=num_edges_guess,
     degree_guess=dataset_average_degree,
     float_or_fixed="fixed",
-    fpx=FPX(32, 16),
+    fpx=FPX(16, 10),
     fpga_part="xcu280-fsvh2892-2L-e",
     n_jobs=32,
+    cosim_wave_debug=True,
 )
 
 proj.gen_hw_model()
 proj.gen_testbench()
 proj.gen_makefile()
 proj.gen_vitis_hls_tcl_script()
+proj.gen_vitis_hls_cosim_tcl_script()
 proj.gen_makefile_vitis()
 
-# tb_data = proj.build_and_run_testbench()
-# print(tb_data)
+tb_data = proj.build_and_run_testbench()
+print(tb_data)
 
-# synth_data = proj.run_vitis_hls_synthesis()
-# print(synth_data)
+synth_data = proj.run_vitis_hls_synthesis()
+print(synth_data)

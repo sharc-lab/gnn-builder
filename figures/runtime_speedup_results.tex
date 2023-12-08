@@ -1,17 +1,16 @@
 \begin{table}
-\centering
 \caption{FPGA-PAR Runtime speedup over PyG CPU, PyG GPU, and C++ CPU runtimes.}
 \label{tab:runtime_speedup}
 \begin{tabular}{c | ccc}
 \toprule
-runtime\_type &  fpga\_par\_speedup\_over\_pyg\_cpu &  fpga\_par\_speedup\_over\_pyg\_gpu &  fpga\_par\_speedup\_over\_cpp\_cpu \\
-model   &                                &                                &                                \\
+runtime_type & fpga_par_speedup_over_pyg_cpu & fpga_par_speedup_over_pyg_gpu & fpga_par_speedup_over_cpp_cpu \\
+model &  &  &  \\
 \midrule
-gcn     &                          6.46x &                          7.66x &                          3.04x \\
-gin     &                          5.81x &                          6.08x &                          4.24x \\
-pna     &                          6.48x &                          6.70x &                         22.14x \\
-sage    &                          6.58x &                          7.16x &                          8.84x \\
-geomean &                          6.33x &                          6.87x &                          7.08x \\
+gcn & 4.08x & 4.99x & 1.93x \\
+gin & 2.80x & 3.06x & 2.06x \\
+pna & 3.14x & 3.23x & 10.38x \\
+sage & 3.30x & 3.86x & 4.45x \\
+geomean & 3.30x & 3.72x & 3.68x \\
 \bottomrule
 \end{tabular}
 \end{table}

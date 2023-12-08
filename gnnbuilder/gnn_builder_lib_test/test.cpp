@@ -1,5 +1,13 @@
 #include "test.h"
 
+const int input_node_feature_size_const = 8;
+const int output_feature_size_const = 8;
+
+const int input_edge_feature_size_const = 16;
+
+const int max_nodes = 1000;
+const int max_edges = 1000;
+
 bool test_activations() {
 
     const int SIZE = 64;
@@ -79,6 +87,374 @@ bool test_activations() {
 
     return pass;
 }
+
+bool test_apply_activation() {
+    const int SIZE_M = 8;
+    const int SIZE_N = 16;
+    const int SIZE_O = 32;
+
+    // auto activation = relu;
+
+    T_array_1d<float, SIZE_M> x_in_1d_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_in_2d_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_in_3d_float;
+
+    for (int i = 0; i < SIZE_M; i++) {
+        x_in_1d_float[i] = i - SIZE_M / 2;
+    }
+
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            x_in_2d_float[i][j] = (i - SIZE_M / 2) * (j - SIZE_N / 2);
+        }
+    }
+
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            for (int k = 0; k < SIZE_O; k++) {
+                x_in_3d_float[i][j][k] = (i - SIZE_M / 2) * (j - SIZE_N / 2) * (k - SIZE_O / 2);
+            }
+        }
+    }
+
+    T_array_1d<F_TYPE, SIZE_M> x_in_1d_fixed;
+    T_array_2d<F_TYPE, SIZE_M, SIZE_N> x_in_2d_fixed;
+    T_array_3d<F_TYPE, SIZE_M, SIZE_N, SIZE_O> x_in_3d_fixed;
+
+    cast_1d<SIZE_M>(x_in_1d_float, x_in_1d_fixed);
+    cast_2d<SIZE_M, SIZE_N>(x_in_2d_float, x_in_2d_fixed);
+    cast_3d<SIZE_M, SIZE_N, SIZE_O>(x_in_3d_float, x_in_3d_fixed);
+    
+    T_array_1d<float, SIZE_M> x_out_1d_gold_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_out_2d_gold_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_out_3d_gold_float;
+
+    for (int i = 0; i < SIZE_M; i++) {
+        x_out_1d_gold_float[i] = activation_leakyrelu(x_in_1d_float[i]);
+    }
+
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            x_out_2d_gold_float[i][j] = activation_leakyrelu(x_in_2d_float[i][j]);
+        }
+    }
+
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            for (int k = 0; k < SIZE_O; k++) {
+                x_out_3d_gold_float[i][j][k] = activation_leakyrelu(x_in_3d_float[i][j][k]);
+            }
+        }
+    }
+
+    T_array_1d<F_TYPE, SIZE_M> x_out_1d_kernel_fixed;
+    T_array_2d<F_TYPE, SIZE_M, SIZE_N> x_out_2d_kernel_fixed;
+    T_array_3d<F_TYPE, SIZE_M, SIZE_N, SIZE_O> x_out_3d_kernel_fixed;
+
+    apply_activation_1d<SIZE_M, F_TYPE, activation_leakyrelu>(x_in_1d_fixed, x_out_1d_kernel_fixed);
+    apply_activation_2d<SIZE_M, SIZE_N, F_TYPE, activation_leakyrelu>(x_in_2d_fixed, x_out_2d_kernel_fixed);
+    apply_activation_3d<SIZE_M, SIZE_N, SIZE_O, F_TYPE, activation_leakyrelu>(x_in_3d_fixed, x_out_3d_kernel_fixed);
+
+    T_array_1d<float, SIZE_M> x_out_1d_kernel_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_out_2d_kernel_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_out_3d_kernel_float;
+
+    cast_1d<SIZE_M>(x_out_1d_kernel_fixed, x_out_1d_kernel_float);
+    cast_2d<SIZE_M, SIZE_N>(x_out_2d_kernel_fixed, x_out_2d_kernel_float);
+    cast_3d<SIZE_M, SIZE_N, SIZE_O>(x_out_3d_kernel_fixed, x_out_3d_kernel_float);
+
+    bool pass = true;
+    const float EPS = 1e-2;
+    
+    for (int i = 0; i < SIZE_M; i++) {
+        float error = std::fabs(x_out_1d_gold_float[i] - x_out_1d_kernel_float[i]);
+        if (error > EPS) {
+            printf("1D failed at index %d: %f != %f\n", i, x_out_1d_gold_float[i], x_out_1d_kernel_float[i]);
+            pass &= false;
+        }
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            float error = std::fabs(x_out_2d_gold_float[i][j] - x_out_2d_kernel_float[i][j]);
+            if (error > EPS) {
+                printf("2D failed at index %d: %f != %f\n", i, x_out_2d_gold_float[i][j], x_out_2d_kernel_float[i][j]);
+                pass &= false;
+            }
+        }
+    }
+
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            for (int k = 0; k < SIZE_O; k++) {
+                float error = std::fabs(x_out_3d_gold_float[i][j][k] - x_out_3d_kernel_float[i][j][k]);
+                if (error > EPS) {
+                    printf("3D failed at index %d: %f != %f\n", i, x_out_3d_gold_float[i][j][k], x_out_3d_kernel_float[i][j][k]);
+                    pass &= false;
+                }
+            }
+        }
+    }
+
+    return pass;
+}
+
+
+bool test_split() {
+    const int SIZE_M = 64;
+    const int SIZE_N = 32;
+    const int SIZE_O = 16;
+
+    T_array_1d<float, SIZE_M> x_in_1d_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_in_2d_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_in_3d_float;
+
+    for (int i = 0; i < SIZE_M; i++) {
+        x_in_1d_float[i] = i - SIZE_M / 2;
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            x_in_2d_float[i][j] = (i - SIZE_M / 2) * (j - SIZE_N / 2);
+        }
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            for (int k = 0; k < SIZE_O; k++) {
+                x_in_3d_float[i][j][k] = (i - SIZE_M / 2) * (j - SIZE_N / 2) * (k - SIZE_O / 2);
+            }
+        }
+    }
+
+    T_array_1d<F_TYPE, SIZE_M> x_in_1d_fixed;
+    T_array_2d<F_TYPE, SIZE_M, SIZE_N> x_in_2d_fixed;
+    T_array_3d<F_TYPE, SIZE_M, SIZE_N, SIZE_O> x_in_3d_fixed;
+
+    cast_1d<SIZE_M>(x_in_1d_float, x_in_1d_fixed);
+    cast_2d<SIZE_M, SIZE_N>(x_in_2d_float, x_in_2d_fixed);
+    cast_3d<SIZE_M, SIZE_N, SIZE_O>(x_in_3d_float, x_in_3d_fixed);
+
+    T_array_1d<float, SIZE_M> x_out_1_1d_gold_float;
+    T_array_1d<float, SIZE_M> x_out_2_1d_gold_float;
+
+    T_array_2d<float, SIZE_M, SIZE_N> x_out_1_2d_gold_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_out_2_2d_gold_float;
+
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_out_1_3d_gold_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_out_2_3d_gold_float;
+
+    for (int i = 0; i < SIZE_M; i++) {
+        x_out_1_1d_gold_float[i] = x_in_1d_float[i];
+        x_out_2_1d_gold_float[i] = x_in_1d_float[i];
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            x_out_1_2d_gold_float[i][j] = x_in_2d_float[i][j];
+            x_out_2_2d_gold_float[i][j] = x_in_2d_float[i][j];
+        }
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            for (int k = 0; k < SIZE_O; k++) {
+                x_out_1_3d_gold_float[i][j][k] = x_in_3d_float[i][j][k];
+                x_out_2_3d_gold_float[i][j][k] = x_in_3d_float[i][j][k];
+            }
+        }
+    }
+
+    T_array_1d<F_TYPE, SIZE_M> x_out_1_1d_kernel_fixed;
+    T_array_1d<F_TYPE, SIZE_M> x_out_2_1d_kernel_fixed;
+
+    T_array_2d<F_TYPE, SIZE_M, SIZE_N> x_out_1_2d_kernel_fixed;
+    T_array_2d<F_TYPE, SIZE_M, SIZE_N> x_out_2_2d_kernel_fixed;
+
+    T_array_3d<F_TYPE, SIZE_M, SIZE_N, SIZE_O> x_out_1_3d_kernel_fixed;
+    T_array_3d<F_TYPE, SIZE_M, SIZE_N, SIZE_O> x_out_2_3d_kernel_fixed;
+
+    split_1d<SIZE_M, F_TYPE>(x_in_1d_fixed, x_out_1_1d_kernel_fixed, x_out_2_1d_kernel_fixed);
+    split_2d<SIZE_M, SIZE_N, F_TYPE>(x_in_2d_fixed, x_out_1_2d_kernel_fixed, x_out_2_2d_kernel_fixed);
+    split_3d<SIZE_M, SIZE_N, SIZE_O, F_TYPE>(x_in_3d_fixed, x_out_1_3d_kernel_fixed, x_out_2_3d_kernel_fixed);
+
+    T_array_1d<float, SIZE_M> x_out_1_1d_kernel_float;
+    T_array_1d<float, SIZE_M> x_out_2_1d_kernel_float;
+
+    T_array_2d<float, SIZE_M, SIZE_N> x_out_1_2d_kernel_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_out_2_2d_kernel_float;
+
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_out_1_3d_kernel_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_out_2_3d_kernel_float;
+
+    cast_1d<SIZE_M>(x_out_1_1d_kernel_fixed, x_out_1_1d_kernel_float);
+    cast_1d<SIZE_M>(x_out_2_1d_kernel_fixed, x_out_2_1d_kernel_float);
+
+    cast_2d<SIZE_M, SIZE_N>(x_out_1_2d_kernel_fixed, x_out_1_2d_kernel_float);
+    cast_2d<SIZE_M, SIZE_N>(x_out_2_2d_kernel_fixed, x_out_2_2d_kernel_float);
+
+    cast_3d<SIZE_M, SIZE_N, SIZE_O>(x_out_1_3d_kernel_fixed, x_out_1_3d_kernel_float);
+    cast_3d<SIZE_M, SIZE_N, SIZE_O>(x_out_2_3d_kernel_fixed, x_out_2_3d_kernel_float);
+
+    bool pass = true;
+    const float EPS = 1e-3;
+
+    for (int i = 0; i < SIZE_M; i++) {
+        float error_1 = std::fabs(x_out_1_1d_gold_float[i] - x_out_1_1d_kernel_float[i]);
+        float error_2 = std::fabs(x_out_2_1d_gold_float[i] - x_out_2_1d_kernel_float[i]);
+        if (error_1 > EPS) {
+            printf("1D failed at index %d: %f != %f\n", i, x_out_1_1d_gold_float[i], x_out_1_1d_kernel_float[i]);
+            pass &= false;
+        }
+        if (error_2 > EPS) {
+            printf("1D failed at index %d: %f != %f\n", i, x_out_2_1d_gold_float[i], x_out_2_1d_kernel_float[i]);
+            pass &= false;
+        }
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            float error_1 = std::fabs(x_out_1_2d_gold_float[i][j] - x_out_1_2d_kernel_float[i][j]);
+            float error_2 = std::fabs(x_out_2_2d_gold_float[i][j] - x_out_2_2d_kernel_float[i][j]);
+            if (error_1 > EPS) {
+                printf("2D failed at index %d: %f != %f\n", i, x_out_1_2d_gold_float[i][j], x_out_1_2d_kernel_float[i][j]);
+                pass &= false;
+            }
+            if (error_2 > EPS) {
+                printf("2D failed at index %d: %f != %f\n", i, x_out_2_2d_gold_float[i][j], x_out_2_2d_kernel_float[i][j]);
+                pass &= false;
+            }
+        }
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            for (int k = 0; k < SIZE_O; k++) {
+                float error_1 = std::fabs(x_out_1_3d_gold_float[i][j][k] - x_out_1_3d_kernel_float[i][j][k]);
+                float error_2 = std::fabs(x_out_2_3d_gold_float[i][j][k] - x_out_2_3d_kernel_float[i][j][k]);
+                if (error_1 > EPS) {
+                    printf("3D failed at index %d: %f != %f\n", i, x_out_1_3d_gold_float[i][j][k], x_out_1_3d_kernel_float[i][j][k]);
+                    pass &= false;
+                }
+                if (error_2 > EPS) {
+                    printf("3D failed at index %d: %f != %f\n", i, x_out_2_3d_gold_float[i][j][k], x_out_2_3d_kernel_float[i][j][k]);
+                    pass &= false;
+                }
+            }
+        }
+    }
+
+    return pass;
+}
+
+
+bool test_merge_sum(){
+    const int SIZE_M = 64;
+    const int SIZE_N = 32;
+    const int SIZE_O = 16;
+
+    T_array_1d<float, SIZE_M> x_in_1_1d_float;
+    T_array_1d<float, SIZE_M> x_in_2_1d_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_in_1_2d_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_in_2_2d_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_in_1_3d_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_in_2_3d_float;
+
+    for (int i = 0; i < SIZE_M; i++) {
+        x_in_1_1d_float[i] = i - (SIZE_M / 2);
+        x_in_2_1d_float[i] = (SIZE_M / 2) - i;
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            x_in_1_2d_float[i][j] = (i - (SIZE_M / 2)) * (j - (SIZE_N / 2));
+            x_in_2_2d_float[i][j] = ((SIZE_M / 2) - i) * ((SIZE_N / 2) - j);
+        }
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            for (int k = 0; k < SIZE_O; k++) {
+                x_in_1_3d_float[i][j][k] = (i - (SIZE_M / 2)) * (j - (SIZE_N / 2)) * (k - (SIZE_O / 2));
+                x_in_2_3d_float[i][j][k] = ((SIZE_M / 2) - i) * ((SIZE_N / 2) - j) * ((SIZE_O / 2) - k);
+            }
+        }
+    }
+
+    T_array_1d<F_TYPE, SIZE_M> x_in_1_1d_fixed;
+    T_array_1d<F_TYPE, SIZE_M> x_in_2_1d_fixed;
+    T_array_2d<F_TYPE, SIZE_M, SIZE_N> x_in_1_2d_fixed;
+    T_array_2d<F_TYPE, SIZE_M, SIZE_N> x_in_2_2d_fixed;
+    T_array_3d<F_TYPE, SIZE_M, SIZE_N, SIZE_O> x_in_1_3d_fixed;
+    T_array_3d<F_TYPE, SIZE_M, SIZE_N, SIZE_O> x_in_2_3d_fixed;
+
+    cast_1d<SIZE_M>(x_in_1_1d_float, x_in_1_1d_fixed);
+    cast_1d<SIZE_M>(x_in_2_1d_float, x_in_2_1d_fixed);
+    cast_2d<SIZE_M, SIZE_N>(x_in_1_2d_float, x_in_1_2d_fixed);
+    cast_2d<SIZE_M, SIZE_N>(x_in_2_2d_float, x_in_2_2d_fixed);
+    cast_3d<SIZE_M, SIZE_N, SIZE_O>(x_in_1_3d_float, x_in_1_3d_fixed);
+    cast_3d<SIZE_M, SIZE_N, SIZE_O>(x_in_2_3d_float, x_in_2_3d_fixed);
+
+    T_array_1d<float, SIZE_M> x_out_1d_gold_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_out_2d_gold_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_out_3d_gold_float;
+
+    for (int i = 0; i < SIZE_M; i++) {
+        x_out_1d_gold_float[i] = x_in_1_1d_float[i] + x_in_2_1d_float[i];
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            x_out_2d_gold_float[i][j] = x_in_1_2d_float[i][j] + x_in_2_2d_float[i][j];
+        }
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            for (int k = 0; k < SIZE_O; k++) {
+                x_out_3d_gold_float[i][j][k] = x_in_1_3d_float[i][j][k] + x_in_2_3d_float[i][j][k];
+            }
+        }
+    }
+
+    T_array_1d<F_TYPE, SIZE_M> x_out_1d_kernel_fixed;
+    T_array_2d<F_TYPE, SIZE_M, SIZE_N> x_out_2d_kernel_fixed;
+    T_array_3d<F_TYPE, SIZE_M, SIZE_N, SIZE_O> x_out_3d_kernel_fixed;
+
+    merge_sum_1d<SIZE_M, F_TYPE>(x_in_1_1d_fixed, x_in_2_1d_fixed, x_out_1d_kernel_fixed);
+    merge_sum_2d<SIZE_M, SIZE_N, F_TYPE>(x_in_1_2d_fixed, x_in_2_2d_fixed, x_out_2d_kernel_fixed);
+    merge_sum_3d<SIZE_M, SIZE_N, SIZE_O, F_TYPE>(x_in_1_3d_fixed, x_in_2_3d_fixed, x_out_3d_kernel_fixed);
+
+    T_array_1d<float, SIZE_M> x_out_1d_kernel_float;
+    T_array_2d<float, SIZE_M, SIZE_N> x_out_2d_kernel_float;
+    T_array_3d<float, SIZE_M, SIZE_N, SIZE_O> x_out_3d_kernel_float;
+
+    cast_1d<SIZE_M>(x_out_1d_kernel_fixed, x_out_1d_kernel_float);
+    cast_2d<SIZE_M, SIZE_N>(x_out_2d_kernel_fixed, x_out_2d_kernel_float);
+    cast_3d<SIZE_M, SIZE_N, SIZE_O>(x_out_3d_kernel_fixed, x_out_3d_kernel_float);
+
+    bool pass = true;
+    const float EPS = 1e-3;
+    for (int i = 0; i < SIZE_M; i++) {
+        float error = std::fabs(x_out_1d_gold_float[i] - x_out_1d_kernel_float[i]);
+        if (error > EPS) {
+            printf("1D failed at index %d: %f != %f\n", i, x_out_1d_gold_float[i], x_out_1d_kernel_float[i]);
+            pass &= false;
+        }
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            float error = std::fabs(x_out_2d_gold_float[i][j] - x_out_2d_kernel_float[i][j]);
+            if (error > EPS) {
+                printf("2D failed at index %d: %f != %f\n", i, x_out_2d_gold_float[i][j], x_out_2d_kernel_float[i][j]);
+                pass &= false;
+            }
+        }
+    }
+    for (int i = 0; i < SIZE_M; i++) {
+        for (int j = 0; j < SIZE_N; j++) {
+            for (int k = 0; k < SIZE_O; k++) {
+                float error = std::fabs(x_out_3d_gold_float[i][j][k] - x_out_3d_kernel_float[i][j][k]);
+                if (error > EPS) {
+                    printf("3D failed at index %d: %f != %f\n", i, x_out_3d_gold_float[i][j][k], x_out_3d_kernel_float[i][j][k]);
+                    pass &= false;
+                }
+            }
+        }
+    }
+
+    return pass;
+}
+
 
 bool test_mean_incremental() {
     const int MEAN_SIZE = 10;
@@ -174,19 +550,20 @@ bool test_variance_incremental() {
 bool test_sum_incremental() {
     const int SUM_SIZE = 10;
     float sum_in_float[SUM_SIZE];
-    F_TYPE sum_in_fixed[SUM_SIZE];
     for (int i = 0; i < SUM_SIZE; i++) {
         sum_in_float[i] = i - SUM_SIZE / 2;
     }
+    
+    F_TYPE sum_in_fixed[SUM_SIZE];
     for (int i = 0; i < SUM_SIZE; i++) {
         sum_in_fixed[i] = F_TYPE(sum_in_float[i]);
     }
 
-    float sum_out_gold_float;
-    F_TYPE sum_out_gold_fixed;
+    float sum_out_gold_float = 0;
     for (int i = 0; i < SUM_SIZE; i++) {
         sum_out_gold_float += sum_in_float[i];
     }
+    F_TYPE sum_out_gold_fixed;
     sum_out_gold_fixed = F_TYPE(sum_out_gold_float);
 
     float sum_out_kernel_float;
@@ -435,10 +812,79 @@ bool test_linear_buffered(){
     return pass;
 }
 
+bool test_linear_simple(){
+    const int LINEAR_SIZE_IN = 5;
+    const int LINEAR_SIZE_OUT = 10;
+
+    float linear_in_float[LINEAR_SIZE_IN];
+    F_TYPE linear_in_fixed[LINEAR_SIZE_IN];
+    for (int i = 0; i < LINEAR_SIZE_IN; i++) {
+        linear_in_float[i] = i - LINEAR_SIZE_IN / 2;
+    }
+    for (int i = 0; i < LINEAR_SIZE_IN; i++) {
+        linear_in_fixed[i] = F_TYPE(linear_in_float[i]);
+    }
+
+    float linear_weight_float[LINEAR_SIZE_OUT][LINEAR_SIZE_IN];
+    F_TYPE linear_weight_fixed[LINEAR_SIZE_OUT][LINEAR_SIZE_IN];
+    for (int i = 0; i < LINEAR_SIZE_OUT; i++) {
+        for (int j = 0; j < LINEAR_SIZE_IN; j++) {
+            linear_weight_float[i][j] = i * j;
+        }
+    }
+    for (int i = 0; i < LINEAR_SIZE_OUT; i++) {
+        for (int j = 0; j < LINEAR_SIZE_IN; j++) {
+            linear_weight_fixed[i][j] = F_TYPE(linear_weight_float[i][j]);
+        }
+    }
+
+    float linear_biased_float[LINEAR_SIZE_OUT];
+    F_TYPE linear_biased_fixed[LINEAR_SIZE_OUT];
+    for (int i = 0; i < LINEAR_SIZE_OUT; i++) {
+        linear_biased_float[i] = i;
+    }
+    for (int i = 0; i < LINEAR_SIZE_OUT; i++) {
+        linear_biased_fixed[i] = F_TYPE(linear_biased_float[i]);
+    }
+
+    float linear_out_gold_float[LINEAR_SIZE_OUT];
+    F_TYPE linear_out_gold_fixed[LINEAR_SIZE_OUT];
+    for (int i = 0; i < LINEAR_SIZE_OUT; i++) {
+        linear_out_gold_float[i] = 0;
+        for (int j = 0; j < LINEAR_SIZE_IN; j++) {
+            linear_out_gold_float[i] += linear_in_float[j] * linear_weight_float[i][j];
+        }
+        linear_out_gold_float[i] += linear_biased_float[i];
+    }
+    for (int i = 0; i < LINEAR_SIZE_OUT; i++) {
+        linear_out_gold_fixed[i] = F_TYPE(linear_out_gold_float[i]);
+    }
+
+    float linear_out_kernel_float[LINEAR_SIZE_OUT];
+    F_TYPE linear_out_kernel_fixed[LINEAR_SIZE_OUT];
+
+    linear_simple<LINEAR_SIZE_IN, LINEAR_SIZE_OUT>(linear_in_fixed, linear_out_kernel_fixed, linear_weight_fixed, linear_biased_fixed);
+
+    for (int i = 0; i < LINEAR_SIZE_OUT; i++) {
+        linear_out_kernel_float[i] = float(linear_out_kernel_fixed[i]);
+    }
+
+    // check gold and kernel output are the same
+    bool pass = true;
+    float eps = 1e-3;
+    for (int i = 0; i < LINEAR_SIZE_OUT; i++) {
+        if (fabs(linear_out_gold_float[i] - linear_out_kernel_float[i]) > eps) {
+            printf("%f != %f\n", linear_out_gold_float[i], linear_out_kernel_float[i]);
+            pass = false;
+        }
+    }
+    return pass;
+}
+
 bool test_compute_degree_tables() {
 
-    const int max_nodes = 1000;
-    const int max_edges = 1000;
+    // const int max_nodes = 1000;
+    // const int max_edges = 1000;
 
     std::ifstream f_tb_max_nodes("./tb_data/tb_max_nodes.txt");
     std::ifstream f_tb_max_edges("./tb_data/tb_max_edges.txt");
@@ -494,10 +940,10 @@ bool test_compute_degree_tables() {
     return degree_tables_pass;
 }
 
-bool test_compute_neighbor_tables() {
+bool test_compute_neighbor_and_edge_index_tables() {
 
-    const int max_nodes = 1000;
-    const int max_edges = 1000;
+    // const int max_nodes = 1000;
+    // const int max_edges = 1000;
 
     std::ifstream f_tb_max_nodes("./tb_data/tb_max_nodes.txt");
     std::ifstream f_tb_max_edges("./tb_data/tb_max_edges.txt");
@@ -527,8 +973,8 @@ bool test_compute_neighbor_tables() {
         out_degree_table_kernel,
         num_nodes, num_edges);
 
-    int neighbor_table_offsets_kernel[max_nodes] = {0};
-    int neighbor_table_kernel[max_edges] = {0};
+    int neighbor_table_offsets_kernel_0[max_nodes] = {0};
+    int neighbor_table_kernel_0[max_edges] = {0};
 
     compute_neighbor_tables<
         max_nodes,
@@ -536,25 +982,70 @@ bool test_compute_neighbor_tables() {
         coo_matrix,
         in_degree_table_kernel,
         out_degree_table_kernel,
-        neighbor_table_offsets_kernel,
-        neighbor_table_kernel,
+        neighbor_table_offsets_kernel_0,
+        neighbor_table_kernel_0,
+        num_nodes,
+        num_edges);
+
+
+    int neighbor_table_offsets_kernel_1[max_nodes] = {0};
+    int neighbor_table_kernel_1[max_edges] = {0};
+    int edge_index_table_kernel_1[max_edges] = {0};
+
+    compute_neighbor_and_edge_index_tables<
+        max_nodes,
+        max_edges>(
+        coo_matrix,
+        in_degree_table_kernel,
+        out_degree_table_kernel,
+        neighbor_table_offsets_kernel_1,
+        neighbor_table_kernel_1,
+        edge_index_table_kernel_1,
         num_nodes,
         num_edges);
 
     int neighbor_table_offsets_gold[max_nodes] = {0};
     int neighbor_table_gold[max_edges] = {0};
+    int edge_index_table_gold[max_edges] = {0};
 
     load_data_var_1d<max_nodes>("./tb_data/tb_neighbor_table_offsets.bin", neighbor_table_offsets_gold, num_nodes);
     load_data_var_1d<max_edges>("./tb_data/tb_neighbor_table.bin", neighbor_table_gold, num_edges);
+    load_data_var_1d<max_edges>("./tb_data/tb_edge_index_table.bin", edge_index_table_gold, num_edges);
 
     bool neighbor_tables_pass = true;
     for (int i = 0; i < num_nodes; i++) {
-        if (neighbor_table_offsets_gold[i] != neighbor_table_offsets_kernel[i]) {
-            printf("neighbor_table_offsets_gold[%d]: %d != neighbor_table_offsets_kernel[%d]: %d\n", i, neighbor_table_offsets_gold[i], i, neighbor_table_offsets_kernel[i]);
+        // if (neighbor_table_offsets_gold[i] != neighbor_table_offsets_kernel[i]) {
+        //     printf("neighbor_table_offsets_gold[%d]: %d != neighbor_table_offsets_kernel[%d]: %d\n", i, neighbor_table_offsets_gold[i], i, neighbor_table_offsets_kernel[i]);
+        //     neighbor_tables_pass = false;
+        // }
+        // if (neighbor_table_gold[i] != neighbor_table_kernel[i]) {
+        //     printf("neighbor_table_gold[%d]: %d != neighbor_table_kernel[%d]: %d\n", i, neighbor_table_gold[i], i, neighbor_table_kernel[i]);
+        //     neighbor_tables_pass = false;
+        // }
+        // if (edge_index_table_gold[i] != edge_index_table_kernel[i]) {
+        //     printf("edge_index_table_gold[%d]: %d != edge_index_table_kernel[%d]: %d\n", i, edge_index_table_gold[i], i, edge_index_table_kernel[i]);
+        //     neighbor_tables_pass = false;
+        // }
+
+        if (neighbor_table_offsets_gold[i] != neighbor_table_offsets_kernel_0[i]) {
+            printf("neighbor_table_offsets_gold[%d]: %d != neighbor_table_offsets_kernel_0[%d]: %d\n", i, neighbor_table_offsets_gold[i], i, neighbor_table_offsets_kernel_0[i]);
             neighbor_tables_pass = false;
         }
-        if (neighbor_table_gold[i] != neighbor_table_kernel[i]) {
-            printf("neighbor_table_gold[%d]: %d != neighbor_table_kernel[%d]: %d\n", i, neighbor_table_gold[i], i, neighbor_table_kernel[i]);
+        if (neighbor_table_gold[i] != neighbor_table_kernel_0[i]) {
+            printf("neighbor_table_gold[%d]: %d != neighbor_table_kernel_0[%d]: %d\n", i, neighbor_table_gold[i], i, neighbor_table_kernel_0[i]);
+            neighbor_tables_pass = false;
+        }
+
+        if (neighbor_table_offsets_gold[i] != neighbor_table_offsets_kernel_1[i]) {
+            printf("neighbor_table_offsets_gold[%d]: %d != neighbor_table_offsets_kernel_1[%d]: %d\n", i, neighbor_table_offsets_gold[i], i, neighbor_table_offsets_kernel_1[i]);
+            neighbor_tables_pass = false;
+        }
+        if (neighbor_table_gold[i] != neighbor_table_kernel_1[i]) {
+            printf("neighbor_table_gold[%d]: %d != neighbor_table_kernel_1[%d]: %d\n", i, neighbor_table_gold[i], i, neighbor_table_kernel_1[i]);
+            neighbor_tables_pass = false;
+        }
+        if (edge_index_table_gold[i] != edge_index_table_kernel_1[i]) {
+            printf("edge_index_table_gold[%d]: %d != edge_index_table_kernel_1[%d]: %d\n", i, edge_index_table_gold[i], i, edge_index_table_kernel_1[i]);
             neighbor_tables_pass = false;
         }
     }
@@ -564,8 +1055,8 @@ bool test_compute_neighbor_tables() {
 
 bool test_gcn_conv() {
 
-    const int max_nodes = 1000;
-    const int max_edges = 1000;
+    // const int max_nodes = 1000;
+    // const int max_edges = 1000;
 
     std::ifstream f_tb_max_nodes("./tb_data/tb_max_nodes.txt");
     std::ifstream f_tb_max_edges("./tb_data/tb_max_edges.txt");
@@ -595,8 +1086,8 @@ bool test_gcn_conv() {
 
     int input_node_feature_size;
     f_tb_input_node_feature_size >> input_node_feature_size;
-    const int input_node_feature_size_const = 8;
-    // assert((input_node_feature_size == input_node_feature_size_const), "input_node_feature_size != input_node_feature_size_const");
+
+    assert((input_node_feature_size == input_node_feature_size_const) && "input_node_feature_size != input_node_feature_size_const");
 
     float input_node_features[max_nodes][input_node_feature_size_const];
     load_data_2d<max_nodes, input_node_feature_size_const>("./tb_data/tb_input_node_features.bin", input_node_features);
@@ -605,8 +1096,7 @@ bool test_gcn_conv() {
 
     int output_feature_size;
     f_tb_output_feature_size >> output_feature_size;
-    const int output_feature_size_const = 16;
-    // assert((output_feature_size == output_feature_size_const), "output_feature_size != output_feature_size_const");
+    assert((output_feature_size == output_feature_size_const) && "output_feature_size != output_feature_size_const");
 
     float gcn_weights[output_feature_size_const][input_node_feature_size_const];
     load_data_2d<output_feature_size_const, input_node_feature_size_const>("./tb_data/tb_gcn_weights.bin", gcn_weights);
@@ -665,8 +1155,8 @@ bool test_gcn_conv() {
 
 bool test_gin_conv() {
 
-    const int max_nodes = 1000;
-    const int max_edges = 1000;
+    // const int max_nodes = 1000;
+    // const int max_edges = 1000;
 
     // open files
     std::ifstream f_tb_max_nodes("./tb_data/tb_max_nodes.txt");
@@ -697,7 +1187,7 @@ bool test_gin_conv() {
 
     int input_node_feature_size;
     f_tb_input_node_feature_size >> input_node_feature_size;
-    const int input_node_feature_size_const = 8;
+    assert((input_node_feature_size == input_node_feature_size_const) && "input_node_feature_size != input_node_feature_size_const");
 
     float input_node_features[max_nodes][input_node_feature_size_const];
     load_data_2d<max_nodes, input_node_feature_size_const>("./tb_data/tb_input_node_features.bin", input_node_features);
@@ -706,11 +1196,12 @@ bool test_gin_conv() {
 
     int output_feature_size;
     f_tb_output_feature_size >> output_feature_size;
-    const int output_feature_size_const = 16;
+    assert((output_feature_size == output_feature_size_const) && "output_feature_size != output_feature_size_const");
 
     int gin_hidden_feature_size;
     f_tb_gin_hidden_feature_size >> gin_hidden_feature_size;
-    const int gin_hidden_feature_size_const = 64;
+    const int gin_hidden_feature_size_const = output_feature_size_const;
+    assert((gin_hidden_feature_size == gin_hidden_feature_size_const) && "gin_hidden_feature_size != gin_hidden_feature_size_const");
 
     float gin_mlp_0_weights[gin_hidden_feature_size_const][input_node_feature_size_const];
     load_data_2d<gin_hidden_feature_size_const, input_node_feature_size_const>("./tb_data/tb_gin_mlp_0_weights.bin", gin_mlp_0_weights);
@@ -793,9 +1284,179 @@ bool test_gin_conv() {
     return gin_pass;
 }
 
+bool test_gine_conv() {
+
+    // const int max_nodes = 1000;
+    // const int max_edges = 1000;
+
+    // open files
+    std::ifstream f_tb_max_nodes("./tb_data/tb_max_nodes.txt");
+    std::ifstream f_tb_max_edges("./tb_data/tb_max_edges.txt");
+    std::ifstream f_tb_num_nodes("./tb_data/tb_num_nodes.txt");
+    std::ifstream f_tb_num_edges("./tb_data/tb_num_edges.txt");
+    std::ifstream f_tb_input_node_feature_size("./tb_data/tb_input_node_feature_size.txt");
+    std::ifstream f_tb_input_edge_feature_size("./tb_data/tb_input_edge_feature_size.txt");
+    std::ifstream f_tb_output_feature_size("./tb_data/tb_output_feature_size.txt");
+    std::ifstream f_tb_gine_hidden_feature_size("./tb_data/tb_gine_hidden_feature_size.txt");
+
+    int num_nodes;
+    f_tb_num_nodes >> num_nodes;
+    int num_edges;
+    f_tb_num_edges >> num_edges;
+
+    int coo_matrix[max_edges][2];
+    load_data_2d<max_edges, 2>("./tb_data/tb_coo_matrix.bin", coo_matrix);
+
+    int in_degree_table[max_nodes];
+    int out_degree_table[max_nodes];
+    load_data_1d<max_nodes>("./tb_data/tb_in_degree_table.bin", in_degree_table);
+    load_data_1d<max_nodes>("./tb_data/tb_out_degree_table.bin", out_degree_table);
+
+    int neighbor_table_offsets[max_nodes];
+    int neighbor_table[max_edges];
+    load_data_var_1d<max_nodes>("./tb_data/tb_neighbor_table_offsets.bin", neighbor_table_offsets, num_nodes);
+    load_data_var_1d<max_edges>("./tb_data/tb_neighbor_table.bin", neighbor_table, num_edges);
+
+    int edge_index_table[max_edges];
+    load_data_var_1d<max_edges>("./tb_data/tb_edge_index_table.bin", edge_index_table, num_edges);
+
+    int input_node_feature_size;
+    f_tb_input_node_feature_size >> input_node_feature_size;
+    assert((input_node_feature_size == input_node_feature_size_const) && "input_node_feature_size != input_node_feature_size_const");
+
+    float input_node_features[max_nodes][input_node_feature_size_const];
+    load_data_2d<max_nodes, input_node_feature_size_const>("./tb_data/tb_input_node_features.bin", input_node_features);
+    F_TYPE input_node_features_fixed[max_nodes][input_node_feature_size_const];
+    cast_2d<max_nodes, input_node_feature_size_const, float, F_TYPE>(input_node_features, input_node_features_fixed);
+
+    int input_edge_feature_size;
+    f_tb_input_edge_feature_size >> input_edge_feature_size;
+    assert((input_edge_feature_size == input_edge_feature_size_const) && "input_edge_feature_size != input_edge_feature_size_const");
+
+    float input_edge_features[max_edges][input_edge_feature_size_const];
+    load_data_2d<max_edges, input_edge_feature_size_const>("./tb_data/tb_input_edge_features.bin", input_edge_features);
+    F_TYPE input_edge_features_fixed[max_edges][input_edge_feature_size_const];
+    cast_2d<max_edges, input_edge_feature_size_const, float, F_TYPE>(input_edge_features, input_edge_features_fixed);
+    
+
+    int output_feature_size;
+    f_tb_output_feature_size >> output_feature_size;
+    assert((output_feature_size == output_feature_size_const) && "output_feature_size != output_feature_size_const");
+
+    int gine_hidden_feature_size;
+    f_tb_gine_hidden_feature_size >> gine_hidden_feature_size;
+    const int gine_hidden_feature_size_const = output_feature_size_const;
+    assert((gine_hidden_feature_size == gine_hidden_feature_size_const) && "gine_hidden_feature_size != gine_hidden_feature_size_const");
+
+    float gine_edge_proj_weights[input_node_feature_size_const][input_edge_feature_size_const];
+    load_data_2d<input_node_feature_size_const, input_edge_feature_size_const>("./tb_data/tb_gine_edge_proj_weights.bin", gine_edge_proj_weights);
+    F_TYPE gine_edge_proj_weights_fixed[input_node_feature_size_const][input_edge_feature_size_const];
+    cast_2d<input_node_feature_size_const, input_edge_feature_size_const, float, F_TYPE>(gine_edge_proj_weights, gine_edge_proj_weights_fixed);
+
+    float gine_edge_proj_bias[input_node_feature_size_const];
+    load_data_1d<input_node_feature_size_const>("./tb_data/tb_gine_edge_proj_bias.bin", gine_edge_proj_bias);
+    F_TYPE gine_edge_proj_bias_fixed[input_node_feature_size_const];
+    cast_1d<input_node_feature_size_const, float, F_TYPE>(gine_edge_proj_bias, gine_edge_proj_bias_fixed);
+
+    float gine_mlp_0_weights[gine_hidden_feature_size_const][input_node_feature_size_const];
+    load_data_2d<gine_hidden_feature_size_const, input_node_feature_size_const>("./tb_data/tb_gine_mlp_0_weights.bin", gine_mlp_0_weights);
+    F_TYPE gine_mlp_0_weights_fixed[gine_hidden_feature_size_const][input_node_feature_size_const];
+    cast_2d<gine_hidden_feature_size_const, input_node_feature_size_const, float, F_TYPE>(gine_mlp_0_weights, gine_mlp_0_weights_fixed);
+
+    float gine_mlp_0_bias[gine_hidden_feature_size_const];
+    load_data_1d<gine_hidden_feature_size_const>("./tb_data/tb_gine_mlp_0_bias.bin", gine_mlp_0_bias);
+    F_TYPE gine_mlp_0_bias_fixed[gine_hidden_feature_size_const];
+    cast_1d<gine_hidden_feature_size_const, float, F_TYPE>(gine_mlp_0_bias, gine_mlp_0_bias_fixed);
+
+    float gine_mlp_1_weights[output_feature_size_const][gine_hidden_feature_size_const];
+    load_data_2d<output_feature_size_const, gine_hidden_feature_size_const>("./tb_data/tb_gine_mlp_1_weights.bin", gine_mlp_1_weights);
+    F_TYPE gine_mlp_1_weights_fixed[output_feature_size_const][gine_hidden_feature_size_const];
+    cast_2d<output_feature_size_const, gine_hidden_feature_size_const, float, F_TYPE>(gine_mlp_1_weights, gine_mlp_1_weights_fixed);
+
+    float gine_mlp_1_bias[output_feature_size_const];
+    load_data_1d<output_feature_size_const>("./tb_data/tb_gine_mlp_1_bias.bin", gine_mlp_1_bias);
+    F_TYPE gine_mlp_1_bias_fixed[output_feature_size_const];
+    cast_1d<output_feature_size_const, float, F_TYPE>(gine_mlp_1_bias, gine_mlp_1_bias_fixed);
+
+    float gine_eps_array[1];
+    float gine_eps;
+    F_TYPE gine_eps_fixed;
+    load_data_1d<1>("./tb_data/tb_gine_eps.bin", gine_eps_array);
+    gine_eps = gine_eps_array[0];
+    gine_eps_fixed = F_TYPE(gine_eps);
+
+    float gine_output_gold[max_nodes][output_feature_size_const];
+    load_data_2d<max_nodes, output_feature_size_const>("./tb_data/tb_gine_output.bin", gine_output_gold);
+
+    // close files
+    f_tb_max_nodes.close();
+    f_tb_max_edges.close();
+    f_tb_num_nodes.close();
+    f_tb_num_edges.close();
+    f_tb_input_node_feature_size.close();
+    f_tb_output_feature_size.close();
+    f_tb_gine_hidden_feature_size.close();
+
+    F_TYPE gine_output_kernel_fixed[max_nodes][output_feature_size_const];
+    gine_conv<
+        max_nodes,
+        max_edges,
+        input_node_feature_size_const,
+        output_feature_size_const,
+        gine_hidden_feature_size_const,
+        input_edge_feature_size_const,
+        F_TYPE
+    >
+    (
+        num_nodes,
+        num_edges,
+        input_node_features_fixed,
+        gine_output_kernel_fixed,
+        input_edge_features,
+        coo_matrix,
+        neighbor_table_offsets,
+        neighbor_table,
+        edge_index_table,
+        in_degree_table,
+        out_degree_table,
+        gine_edge_proj_weights_fixed,
+        gine_edge_proj_bias_fixed,
+        gine_mlp_0_weights_fixed,
+        gine_mlp_0_bias_fixed,
+        gine_mlp_1_weights_fixed,
+        gine_mlp_1_bias_fixed,
+        gine_eps_fixed
+    );
+
+
+    float gine_output_kernel[max_nodes][output_feature_size_const];
+    for (int i = 0; i < num_nodes; i++) {
+        for (int j = 0; j < output_feature_size_const; j++) {
+            gine_output_kernel[i][j] = float(gine_output_kernel_fixed[i][j]);
+        }
+    }
+
+    bool gine_pass = true;
+    float eps = 1e-3;
+    float error = 0.0;
+    for (int i = 0; i < num_nodes; i++) {
+        for (int j = 0; j < output_feature_size_const; j++) {
+            float diff = fabs(gine_output_kernel[i][j] - gine_output_gold[i][j]);
+            error += diff;
+            if (diff > eps) {
+                // printf("gine_output_kernel[%d][%d]: %f != gine_output_gold[%d][%d]: %f\n", i, j, gine_output_kernel[i][j], i, j, gine_output_gold[i][j]);
+                gine_pass = false;
+            }
+        }
+    }
+    error /= (num_nodes * output_feature_size_const);
+
+    return gine_pass;
+}
+
 bool test_pna_conv() {
-    const int max_nodes = 1000;
-    const int max_edges = 1000;
+    // const int max_nodes = 1000;
+    // const int max_edges = 1000;
 
     // open files
     std::ifstream f_tb_max_nodes("./tb_data/tb_max_nodes.txt");
@@ -829,7 +1490,7 @@ bool test_pna_conv() {
 
     int input_node_feature_size;
     f_tb_input_node_feature_size >> input_node_feature_size;
-    const int input_node_feature_size_const = 8;
+    // const int input_node_feature_size_const = 8;
 
     float input_node_features[max_nodes][input_node_feature_size_const];
     load_data_2d<max_nodes, input_node_feature_size_const>("./tb_data/tb_input_node_features.bin", input_node_features);
@@ -838,7 +1499,7 @@ bool test_pna_conv() {
 
     int output_feature_size;
     f_tb_output_feature_size >> output_feature_size;
-    const int output_feature_size_const = 16;
+    // const int output_feature_size_const = 16;
 
     const int pna_transform_in_size = input_node_feature_size_const * 2;
     const int pna_transform_out_size = input_node_feature_size_const;
@@ -947,8 +1608,8 @@ bool test_pna_conv() {
 
 bool test_sage_conv(){
 
-    const int max_nodes = 1000;
-    const int max_edges = 1000;
+    // const int max_nodes = 1000;
+    // const int max_edges = 1000;
 
     std::ifstream f_tb_num_nodes("./tb_data/tb_num_nodes.txt");
     std::ifstream f_tb_num_edges("./tb_data/tb_num_edges.txt");
@@ -974,14 +1635,14 @@ bool test_sage_conv(){
     load_data_var_1d<max_nodes>("./tb_data/tb_neighbor_table_offsets.bin", neighbor_table_offsets, num_nodes);
     load_data_var_1d<max_edges>("./tb_data/tb_neighbor_table.bin", neighbor_table, num_edges);
 
-    const int input_node_feature_size_const = 8;
+    // const int input_node_feature_size_const = 8;
 
     float input_node_features[max_nodes][input_node_feature_size_const];
     load_data_2d<max_nodes, input_node_feature_size_const>("./tb_data/tb_input_node_features.bin", input_node_features);
     F_TYPE input_node_features_fixed[max_nodes][input_node_feature_size_const];
     cast_2d<max_nodes, input_node_feature_size_const, float, F_TYPE>(input_node_features, input_node_features_fixed);
 
-    const int output_feature_size_const = 16;
+    // const int output_feature_size_const = 16;
 
     float sage_neighbor_lin_weights[output_feature_size_const][input_node_feature_size_const];
     load_data_2d<output_feature_size_const, input_node_feature_size_const>("./tb_data/tb_sage_neighbor_lin_weights.bin", sage_neighbor_lin_weights);
@@ -1047,16 +1708,16 @@ bool test_sage_conv(){
     float eps = 1e-3;
     float avg_diff = 0.0;
 
-    for(int i = 0; i < num_nodes; i++){
-        for(int j = 0; j < output_feature_size_const; j++){
-            avg_diff += fabs(sage_output_kernel[i][j] - sage_output_gold[i][j]);
-            // printf("kernel[%d][%d] = %f, gold[%d][%d] = %f\n", i, j, sage_output_kernel[i][j], i, j, sage_output_gold[i][j]);
-            if(fabs(sage_output_kernel[i][j] - sage_output_gold[i][j]) > eps){
-                printf("sage_output_kernel[%d][%d] = %f, sage_output_gold[%d][%d] = %f\n", i, j, sage_output_kernel[i][j], i, j, sage_output_gold[i][j]);
-                sage_pass = false;
-            }
-        }
-    }
+    // for(int i = 0; i < num_nodes; i++){
+    //     for(int j = 0; j < output_feature_size_const; j++){
+    //         avg_diff += fabs(sage_output_kernel[i][j] - sage_output_gold[i][j]);
+    //         // printf("kernel[%d][%d] = %f, gold[%d][%d] = %f\n", i, j, sage_output_kernel[i][j], i, j, sage_output_gold[i][j]);
+    //         if(fabs(sage_output_kernel[i][j] - sage_output_gold[i][j]) > eps){
+    //             printf("sage_output_kernel[%d][%d] = %f, sage_output_gold[%d][%d] = %f\n", i, j, sage_output_kernel[i][j], i, j, sage_output_gold[i][j]);
+    //             sage_pass = false;
+    //         }
+    //     }
+    // }
 
     avg_diff /= num_nodes*output_feature_size_const;
     // printf("avg_diff: %f\n", avg_diff);
@@ -1064,116 +1725,243 @@ bool test_sage_conv(){
     return sage_pass;
 }
 
+bool test_lg_conv() {
+
+    // const int max_nodes = 1000;
+    // const int max_edges = 1000;
+
+    // std::ifstream f_tb_max_nodes("./tb_data/tb_max_nodes.txt");
+    // std::ifstream f_tb_max_edges("./tb_data/tb_max_edges.txt");
+    // std::ifstream f_tb_num_nodes("./tb_data/tb_num_nodes.txt");
+    // std::ifstream f_tb_num_edges("./tb_data/tb_num_edges.txt");
+    // std::ifstream f_tb_input_node_feature_size("./tb_data/tb_input_node_feature_size.txt");
+    // std::ifstream f_tb_output_feature_size("./tb_data/tb_output_feature_size.txt");
+
+    // int num_nodes;
+    // f_tb_num_nodes >> num_nodes;
+    // int num_edges;
+    // f_tb_num_edges >> num_edges;
+
+    // int coo_matrix[max_edges][2];
+    // load_data_var_2d<max_edges, 2>("./tb_data/tb_coo_matrix.bin", coo_matrix, num_edges, 2);
+
+    // int in_degree_table[max_nodes];
+    // int out_degree_table[max_nodes];
+    // load_data_var_1d<max_nodes>("./tb_data/tb_in_degree_table.bin", in_degree_table, num_nodes);
+    // load_data_var_1d<max_nodes>("./tb_data/tb_out_degree_table.bin", out_degree_table, num_nodes);
+
+    // int neighbor_table_offsets[max_nodes];
+    // int neighbor_table[max_edges];
+    // load_data_var_1d<max_nodes>("./tb_data/tb_neighbor_table_offsets.bin", neighbor_table_offsets, num_nodes);
+    // load_data_var_1d<max_edges>("./tb_data/tb_neighbor_table.bin", neighbor_table, num_edges);
+
+    // int input_node_feature_size;
+    // f_tb_input_node_feature_size >> input_node_feature_size;
+    // // const int input_node_feature_size_const = 8;
+    // // assert((input_node_feature_size == input_node_feature_size_const), "input_node_feature_size != input_node_feature_size_const");
+
+    // float input_node_features[max_nodes][input_node_feature_size_const];
+    // load_data_2d<max_nodes, input_node_feature_size_const>("./tb_data/tb_input_node_features.bin", input_node_features);
+    // F_TYPE input_node_features_fixed[max_nodes][input_node_feature_size_const];
+    // cast_2d<max_nodes, input_node_feature_size_const, float, F_TYPE>(input_node_features, input_node_features_fixed);
+
+    // int output_feature_size;
+    // f_tb_output_feature_size >> output_feature_size;
+    // // const int output_feature_size_const = 16;
+    // // assert((output_feature_size == output_feature_size_const), "output_feature_size != output_feature_size_const");
+
+    // const int max_nodes = 1000;
+    // const int max_edges = 1000;
+
+    std::ifstream f_tb_num_nodes("./tb_data/tb_num_nodes.txt");
+    std::ifstream f_tb_num_edges("./tb_data/tb_num_edges.txt");
+
+    int num_nodes;
+    int num_edges;
+    f_tb_num_nodes >> num_nodes;
+    f_tb_num_edges >> num_edges;
+
+    f_tb_num_nodes.close();
+    f_tb_num_edges.close();
+
+    int coo_matrix[max_edges][2];
+    load_data_2d<max_edges, 2>("./tb_data/tb_coo_matrix.bin", coo_matrix);
+
+    int in_degree_table[max_nodes];
+    int out_degree_table[max_nodes];
+    load_data_1d<max_nodes>("./tb_data/tb_in_degree_table.bin", in_degree_table);
+    load_data_1d<max_nodes>("./tb_data/tb_out_degree_table.bin", out_degree_table);
+
+    int neighbor_table_offsets[max_nodes];
+    int neighbor_table[max_edges];
+    load_data_var_1d<max_nodes>("./tb_data/tb_neighbor_table_offsets.bin", neighbor_table_offsets, num_nodes);
+    load_data_var_1d<max_edges>("./tb_data/tb_neighbor_table.bin", neighbor_table, num_edges);
+
+    // const int input_node_feature_size_const = 8;
+
+    float input_node_features[max_nodes][input_node_feature_size_const];
+    load_data_2d<max_nodes, input_node_feature_size_const>("./tb_data/tb_input_node_features.bin", input_node_features);
+    F_TYPE input_node_features_fixed[max_nodes][input_node_feature_size_const];
+    cast_2d<max_nodes, input_node_feature_size_const, float, F_TYPE>(input_node_features, input_node_features_fixed);
+
+    // const int output_feature_size_const = 8;
+
+    float lgconv_output_gold[max_nodes][output_feature_size_const];
+    load_data_var_2d<max_nodes, output_feature_size_const>("./tb_data/tb_lgconv_output.bin", lgconv_output_gold, num_nodes, output_feature_size_const);
+
+    F_TYPE lgconv_output_kernel_fixed[max_nodes][output_feature_size_const];
+    lg_conv<max_nodes, max_edges, input_node_feature_size_const, output_feature_size_const, F_TYPE>(
+        num_nodes,
+        num_edges,
+        input_node_features_fixed,
+        lgconv_output_kernel_fixed,
+        coo_matrix,
+        neighbor_table_offsets,
+        neighbor_table,
+        in_degree_table,
+        out_degree_table
+        );
+
+    float lgconv_output_kernel[max_nodes][output_feature_size_const];
+    for (int i = 0; i < num_nodes; i++) {
+        for (int j = 0; j < output_feature_size_const; j++) {
+            lgconv_output_kernel[i][j] = float(lgconv_output_kernel_fixed[i][j]);
+        }
+    }
+
+    bool lgconv_pass = true;
+    float eps = 1e-3;
+    for (int i = 0; i < num_nodes; i++) {
+        for (int j = 0; j < output_feature_size_const; j++) {
+            if (fabs(lgconv_output_gold[i][j] - lgconv_output_kernel[i][j]) > eps) {
+                lgconv_pass = false;
+            }
+        }
+    }
+
+    return lgconv_pass;
+}
+
+bool test_simple_conv() {
+
+
+
+    std::ifstream f_tb_num_nodes("./tb_data/tb_num_nodes.txt");
+    std::ifstream f_tb_num_edges("./tb_data/tb_num_edges.txt");
+
+    int num_nodes;
+    int num_edges;
+    f_tb_num_nodes >> num_nodes;
+    f_tb_num_edges >> num_edges;
+
+    f_tb_num_nodes.close();
+    f_tb_num_edges.close();
+
+    int coo_matrix[max_edges][2];
+    load_data_2d<max_edges, 2>("./tb_data/tb_coo_matrix.bin", coo_matrix);
+
+    int in_degree_table[max_nodes];
+    int out_degree_table[max_nodes];
+    load_data_1d<max_nodes>("./tb_data/tb_in_degree_table.bin", in_degree_table);
+    load_data_1d<max_nodes>("./tb_data/tb_out_degree_table.bin", out_degree_table);
+
+    int neighbor_table_offsets[max_nodes];
+    int neighbor_table[max_edges];
+    load_data_var_1d<max_nodes>("./tb_data/tb_neighbor_table_offsets.bin", neighbor_table_offsets, num_nodes);
+    load_data_var_1d<max_edges>("./tb_data/tb_neighbor_table.bin", neighbor_table, num_edges);
+
+    const int input_node_feature_size_const = 8;
+
+    float input_node_features[max_nodes][input_node_feature_size_const];
+    load_data_2d<max_nodes, input_node_feature_size_const>("./tb_data/tb_input_node_features.bin", input_node_features);
+    F_TYPE input_node_features_fixed[max_nodes][input_node_feature_size_const];
+    cast_2d<max_nodes, input_node_feature_size_const, float, F_TYPE>(input_node_features, input_node_features_fixed);
+
+    const int output_feature_size_const = 8;
+
+    float simpleconv_output_gold[max_nodes][output_feature_size_const];
+    load_data_var_2d<max_nodes, output_feature_size_const>("./tb_data/tb_simple_output.bin", simpleconv_output_gold, num_nodes, output_feature_size_const);
+
+    F_TYPE simpleconv_output_kernel_fixed[max_nodes][output_feature_size_const];
+    simple_conv<max_nodes, max_edges, input_node_feature_size_const, output_feature_size_const, F_TYPE>(
+        num_nodes,
+        num_edges,
+        input_node_features_fixed,
+        simpleconv_output_kernel_fixed,
+        coo_matrix,
+        neighbor_table_offsets,
+        neighbor_table,
+        in_degree_table,
+        out_degree_table
+    );
+
+    float simpleconv_output_kernel[max_nodes][output_feature_size_const];
+    for (int i = 0; i < num_nodes; i++) {
+        for (int j = 0; j < output_feature_size_const; j++) {
+            simpleconv_output_kernel[i][j] = float(simpleconv_output_kernel_fixed[i][j]);
+        }
+    }
+
+    bool simpleconv_pass = true;
+    float eps = 1e-3;
+    for (int i = 0; i < num_nodes; i++) {
+        for (int j = 0; j < output_feature_size_const; j++) {
+            if (fabs(simpleconv_output_gold[i][j] - simpleconv_output_kernel[i][j]) > eps) {
+                // std::cout << "simpleconv_output_gold[" << i << "][" << j << "] = " << simpleconv_output_gold[i][j] << ", simpleconv_output_kernel[" << i << "][" << j << "] = " << simpleconv_output_kernel[i][j] << std::endl;
+                // // diff
+                // std::cout << "diff = " << fabs(simpleconv_output_gold[i][j] - simpleconv_output_kernel[i][j]) << std::endl;
+                simpleconv_pass = false;
+            }
+        }
+    }
+
+    return simpleconv_pass;
+}
+
+void test_and_print(const char* test_name, bool (*test_func)()) {
+    bool pass = test_func();
+    if (pass) {
+        printf("%s: PASS\n", test_name);
+    } else {
+        printf("%s: FAIL\n", test_name);
+    }
+}
+
+
 int main() {
 
-    printf("############################\n");
-    printf("### GNNBuilder Testbench ###\n");
-    printf("############################\n");
+    printf("#######################################\n");
+    printf("### GNNBuilder Functional Testbench ###\n");
+    printf("#######################################\n");
 
-    bool pass_test_activations = test_activations();
-    if (pass_test_activations) {
-        printf("Test Activations: PASSED\n");
-    } else {
-        printf("Test Activations: FAILED\n");
-    }
+    test_and_print("Test All Activations", test_activations);
+    test_and_print("Test Apply Activation", test_apply_activation);
 
-    bool pass_test_mean_incremental = test_mean_incremental();
-    if (pass_test_mean_incremental) {
-        printf("Test Mean Incremental: PASSED\n");
-    } else {
-        printf("Test Mean Incremental: FAILED\n");
-    }
+    test_and_print("Test Split", test_split);
+    test_and_print("Test Merge Sum", test_merge_sum);
 
-    bool pass_test_variance_incremental = test_variance_incremental();
-    if (pass_test_variance_incremental) {
-        printf("Test Variance Incremental: PASSED\n");
-    } else {
-        printf("Test Variance Incremental: FAILED\n");
-    }
 
-    bool pass_test_sum_incremental = test_sum_incremental();
-    if (pass_test_sum_incremental) {
-        printf("Test Sum Incremental: PASSED\n");
-    } else {
-        printf("Test Sum Incremental: FAILED\n");
-    }
+    test_and_print("Test Mean Incremental", test_mean_incremental);
+    test_and_print("Test Variance Incremental", test_variance_incremental);
+    test_and_print("Test Sum Incremental", test_sum_incremental);
+    test_and_print("Test Max Incremental", test_max_incremental);
+    test_and_print("Test Min Incremental", test_min_incremental);
 
-    // max incremental test
-    bool pass_test_max_incremental = test_max_incremental();
-    if (pass_test_max_incremental) {
-        printf("Test Max Incremental: PASSED\n");
-    }
-    else {
-        printf("Test Max Incremental: FAILED\n");
-    }
+    test_and_print("Test linear", test_linear);
+    test_and_print("Test linear_buffered", test_linear_buffered);
+    test_and_print("Test linear_simple", test_linear_simple);
 
-    bool pass_test_min_incremental = test_min_incremental();
-    if (pass_test_min_incremental) {
-        printf("Test Min Incremental: PASSED\n");
-    }
-    else {
-        printf("Test Min Incremental: FAILED\n");
-    }
+    test_and_print("Test compute_degree_tables", test_compute_degree_tables);
+    test_and_print("Test test_compute_neighbor_and_edge_index_tables", test_compute_neighbor_and_edge_index_tables);
 
-    bool pass_test_linear = test_linear();
-    if (pass_test_linear) {
-        printf("pass_test_linear: PASSED\n");
-    }
-    else{
-        printf("pass_test_linear: FAILED\n");
-    }
-
-    bool pass_test_linear_buffered = test_linear_buffered();
-    if (pass_test_linear_buffered) {
-        printf("pass_test_linear_buffered: PASSED\n");
-    }
-    else{
-        printf("pass_test_linear_buffered: FAILED\n");
-    }
-
-    bool pass_test_compute_degree_tables = test_compute_degree_tables();
-    if (pass_test_compute_degree_tables) {
-        printf("Test Compute Degree Tables: PASSED\n");
-    } else {
-        printf("Test Compute Degree Tables: FAILED\n");
-    }
-
-    bool pass_test_compute_neighbor_tables = test_compute_neighbor_tables();
-    if (pass_test_compute_neighbor_tables) {
-        printf("Test Compute Neighbor Tables: PASSED\n");
-    } else {
-        printf("Test Compute Neighbor Tables: FAILED\n");
-    }
-
-    bool pass_test_gcn_conv = test_gcn_conv();
-    if (pass_test_gcn_conv) {
-        printf("gcn_conv: PASS\n");
-    } else {
-        printf("gcn_conv: FAIL\n");
-    }
-
-    bool pass_test_gin_conv = test_gin_conv();
-    if (pass_test_gin_conv) {
-        printf("gin_conv: PASS\n");
-    } else {
-        printf("gin_conv: FAIL\n");
-    }
-
-    bool pass_test_pna_conv = test_pna_conv();
-    if (pass_test_pna_conv) {
-        printf("pna_conv: PASS\n");
-    } else {
-        printf("pna_conv: FAIL\n");
-    }
-
-    bool pass_test_sage_conv = test_sage_conv();
-    if (pass_test_sage_conv) {
-        printf("sage_conv: PASS\n");
-    } else {
-        printf("sage_conv: FAIL\n");
-    }
+    test_and_print("Test gcn_conv", test_gcn_conv);
+    test_and_print("Test gin_conv", test_gin_conv);
+    test_and_print("Test gine_conv", test_gine_conv);
+    test_and_print("Test pna_conv", test_pna_conv);
+    test_and_print("Test sage_conv", test_sage_conv);
+    test_and_print("Test lg_conv", test_lg_conv);
+    test_and_print("Test simple_conv", test_simple_conv);
 
     return 0;
-
 
 }

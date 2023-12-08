@@ -7,7 +7,7 @@ IFLAG += -I "${VITIS_HLS_DIR}/include"
 IFLAG += -I "${VITIS_HLS_DIR}/include/etc"
 IFLAG += -I "${VITIS_HLS_DIR}/include/utils"
 
-IFLAG += -I "${VITIS_HLS_DIR}/lnx64/tools/fpo_v7_0"
+IFLAG += -I "${VITIS_HLS_DIR}/lnx64/tools/fpo_v7_1"
 IFLAG += -I "${VITIS_HLS_DIR}/lnx64/tools/fft_v9_1"
 IFLAG += -I "${VITIS_HLS_DIR}/lnx64/tools/fir_v7_0"
 IFLAG += -I "${VITIS_HLS_DIR}/lnx64/tools/dds_v6_0"
@@ -21,14 +21,11 @@ IFLAG += -D__SIM_FPO__ -D__SIM_OPENCV__ -D__SIM_FFT__ -D__SIM_FIR__ -D__SIM_DDS_
 IFLAG += -g
 CFLAG += -fPIC -O3 -Wno-unused-result
 CFLAG += -lm
-CFLAG += -std=c++11
+CFLAG += -std=c++14
 # TODO: add support for faster runtime using -ffast-math and -march=native
 # CFLAG += -ffast-math -march=native
 
 CXX = ${VITIS_HLS_DIR}/lnx64/tools/clang-3.9/bin/clang++
-# TODO: add support for system compilers
-# CXX = g++
-
 
 result: ./*.cpp ./*.h
 	$(CXX) ${BUILD_DIR}/*.cpp -o result $(CFLAG) $(IFLAG)

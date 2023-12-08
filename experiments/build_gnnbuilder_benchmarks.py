@@ -491,18 +491,25 @@ def compute_fpga_par_benchmark(
 
 
 if __name__ == "__main__":
-    RESULTS_DIR = Path("./results_gnnb/")
+    RESULTS_DIR = Path("./results_testing_fpga/")
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
-    BUILD_DIR = Path("/usr/scratch/skaram7/gnnb_main_builds/")
+    BUILD_DIR = Path("/usr/scratch/skaram7/gnnb_testing_fpga/")
     os.makedirs(BUILD_DIR, exist_ok=True)
 
-    VITIS_HLS_PATH = Path("/tools/software/xilinx/Vitis_HLS/2022.2/")
+    VITIS_HLS_PATH = Path("/tools/software/xilinx/Vitis_HLS/2023.1/")
 
-    # compute_cpp_cpu_benchmark(combos, RESULTS_DIR, BUILD_DIR, VITIS_HLS_PATH, n_jobs=24)
-    # compute_fpga_base_benchmark(
-    #     combos, RESULTS_DIR, BUILD_DIR, VITIS_HLS_PATH, n_jobs=24
-    # )
+    # print(len(combos))
+
+    print("Computing C++ CPU benchmark")
+    compute_cpp_cpu_benchmark(combos, RESULTS_DIR, BUILD_DIR, VITIS_HLS_PATH, n_jobs=24)
+
+    print("Computing FPGA base benchmark")
+    compute_fpga_base_benchmark(
+        combos, RESULTS_DIR, BUILD_DIR, VITIS_HLS_PATH, n_jobs=24
+    )
+
+    print("Computing FPGA parallel benchmark")
     compute_fpga_par_benchmark(
         combos, RESULTS_DIR, BUILD_DIR, VITIS_HLS_PATH, n_jobs=24
     )

@@ -1,0 +1,5 @@
+bram 896
+dsp 86
+ff 128591
+lut 141623
+uram 0

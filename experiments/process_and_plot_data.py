@@ -1,13 +1,10 @@
 import glob
-import itertools
 import os
-import re
 from pathlib import Path
 from pprint import pp
 
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.ticker as tick
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -77,7 +74,8 @@ def process_runtime_results(results_dir: Path, figures_dir: Path):
     runtime_df = pd.DataFrame(runtime_data)
     # qm9_subset_df = runtime_df[runtime_df["dataset"] == "qm9"]
     runtime_df.to_csv("./figures/runtime_results.csv", index=False)
-    print(runtime_df)
+    # colum order
+    #
 
     # pivot table
     # rows are models
@@ -87,7 +85,13 @@ def process_runtime_results(results_dir: Path, figures_dir: Path):
     runtime_df_pivot = runtime_df.pivot_table(
         index="model", columns="runtime_type", values="runtime", aggfunc=np.mean
     )
+    runtime_df_pivot.reindex(
+        index=["cpp_cpu", "pyg_cpu", "pyg_gpu", "fpga_base", "fpga_par"]
+    )
+
     print(runtime_df_pivot)
+    print(runtime_df_pivot.columns)
+
     runtime_df_pivot.to_csv("./figures/runtime_results_pivot.csv")
 
     runtime_df_pivot["fpga_par_speedup_over_pyg_cpu"] = (
@@ -149,6 +153,8 @@ def process_runtime_results(results_dir: Path, figures_dir: Path):
         "fpga_par": "FPGA-Parallel",
     }
 
+    print(runtime_df)
+
     g = sns.catplot(
         row="dataset",
         x="model",
@@ -160,6 +166,7 @@ def process_runtime_results(results_dir: Path, figures_dir: Path):
         sharex=False,
         sharey=True,
         palette=colors,
+        hue_order=["cpp_cpu", "pyg_cpu", "pyg_gpu", "fpga_base", "fpga_par"],
     )
 
     fig = g.figure
@@ -218,14 +225,6 @@ def process_runtime_results(results_dir: Path, figures_dir: Path):
 
 
 def process_resource_results(results_dir: Path, figures_dir: Path):
-    resource_available_u50 = {
-        "bram": 2688,
-        "dsp": 5952,
-        "ff": 1743360,
-        "lut": 871680,
-        "uram": 640,
-    }
-
     resources_available_u280 = {
         "bram": 4032,
         "dsp": 9024,
@@ -375,7 +374,7 @@ def process_resource_results(results_dir: Path, figures_dir: Path):
     axes = g.axes.ravel()
     axes_dict = g.axes_dict
     for title, ax in axes_dict.items():
-        resource_lim = resource_available[title]
+        resource_available[title]
         # plot horizontal line at resource limit
         ax.axhline(y=1.0, color="#e5383b", linestyle="--")
 
@@ -532,7 +531,7 @@ def process_batch_results(
     fig = g.figure
     fig.set_size_inches(6, 6)
 
-    axes = g.axes.ravel()
+    g.axes.ravel()
     axes_dict = g.axes_dict
     for title, ax in axes_dict.items():
         ax.set_ylabel("Runtime (ms)")
@@ -678,6 +677,10 @@ if __name__ == "__main__":
     if not RESULTS_DIR.exists():
         raise Exception(f"{RESULTS_DIR} does not exist")
 
+    RESULTS_TESTING_DIR = Path("./results_testing")
+    if not RESULTS_TESTING_DIR.exists():
+        raise Exception(f"{RESULTS_TESTING_DIR} does not exist")
+
     RESULTS_BATCH_DIR = Path("./results_batch")
     if not RESULTS_BATCH_DIR.exists():
         raise Exception(f"{RESULTS_BATCH_DIR} does not exist")
@@ -685,7 +688,10 @@ if __name__ == "__main__":
     FIGURES_DIR = Path("./figures")
     os.makedirs(FIGURES_DIR, exist_ok=True)
 
-    # process_runtime_results(RESULTS_DIR, FIGURES_DIR)
-    # process_resource_results(RESULTS_DIR, FIGURES_DIR)
-    # process_batch_results(RESULTS_DIR, RESULTS_BATCH_DIR, FIGURES_DIR)
-    process_energy_results(RESULTS_DIR, RESULTS_BATCH_DIR, FIGURES_DIR)
+    FIGURES_TESTING_DIR = Path("./figures_testing")
+    os.makedirs(FIGURES_TESTING_DIR, exist_ok=True)
+
+    process_runtime_results(RESULTS_TESTING_DIR, FIGURES_TESTING_DIR)
+    process_resource_results(RESULTS_TESTING_DIR, FIGURES_TESTING_DIR)
+    # process_batch_results(RESULTS_TESTING_DIR, RESULTS_BATCH_DIR, FIGURES_TESTING_DIR)
+    # process_energy_results(RESULTS_TESTING_DIR, RESULTS_BATCH_DIR, FIGURES_TESTING_DIR)

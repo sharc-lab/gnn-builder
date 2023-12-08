@@ -1,18 +1,64 @@
 #pragma once
 
+//////////////////////////
+// template array types //
+//////////////////////////
+
+// 1d array
+template <typename T, int N>
+using T_array_1d = T[N];
+
+// 2d array
+template <typename T, int M, int N>
+using T_array_2d = T[M][N];
+
+// 3d array
+template <typename T, int M, int N, int O>
+using T_array_3d = T[M][N][O];
+
+// vector -> 1d array
+template <typename T, int N>
+using T_vector = T_array_1d<T, N>;
+
+// matrix -> 2d array
+template <typename T, int M, int N>
+using T_matrix = T_array_2d<T, M, N>;
+
+// node feature array
+template <typename T, int NUM_NODES, int NUM_FEATURES>
+using T_node_feature_array = T_array_2d<T, NUM_NODES, NUM_FEATURES>;
+
+// edge feature array
+template <typename T, int NUM_EDGES, int NUM_FEATURES>
+using T_edge_feature_array = T_array_2d<T, NUM_EDGES, NUM_FEATURES>;
+
+// edge list array
+template <typename T, int NUM_EDGES>
+using T_edge_list_array = T_array_2d<T, NUM_EDGES, 2>;
+
+// linear weight array
+template <typename T, int DIM_IN, int DIM_OUT>
+using T_linear_weight_array = T_matrix<T, DIM_OUT, DIM_IN>;
+
+// linear bias array
+template <typename T, int DIM_OUT>
+using T_linear_bias_array = T_vector<T, DIM_OUT>;
+
 ///////////////////
 // Array Helpers //
 ///////////////////
 
 template <const int M, typename T>
-void print_1d(T in[M]) {
+void print_1d(T in[M])
+{
     printf("[% 2.5f, % 2.5f, % 2.5f ... % 2.5f, % 2.5f, % 2.5f]\n",
            float(in[0]), (float)in[1], (float)in[2],
            float(in[M - 3]), (float)in[M - 2], (float)in[M - 1]);
 }
 
 template <const int M, const int N, typename T>
-void print_2d(T in[M][N]) {
+void print_2d(T in[M][N])
+{
     print_1d<N, T>(in[0]);
     print_1d<N, T>(in[1]);
     print_1d<N, T>(in[2]);
@@ -25,7 +71,8 @@ void print_2d(T in[M][N]) {
 }
 
 template <const int M, const int N, const int O, typename T>
-void print_3d(T in[M][N][O]) {
+void print_3d(T in[M][N][O])
+{
     printf("[\n");
     print_2d<N, O, T>(in[0]);
     printf("                               .\n");
@@ -36,26 +83,35 @@ void print_3d(T in[M][N][O]) {
 }
 
 template <const int M, typename T>
-void copy_1d(T from[M], T to[M]) {
-    for (int i = 0; i < M; i++) {
+void copy_1d(T from[M], T to[M])
+{
+    for (int i = 0; i < M; i++)
+    {
         to[i] = from[i];
     }
 }
 
 template <const int M, const int N, typename T>
-void copy_2d(T from[M][N], T to[M][N]) {
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
+void copy_2d(T from[M][N], T to[M][N])
+{
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
             to[i][j] = from[i][j];
         }
     }
 }
 
 template <const int M, const int N, const int O, typename T>
-void copy_3d(T from[M][N][O], T to[M][N][O]) {
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
-            for (int k = 0; k < O; k++) {
+void copy_3d(T from[M][N][O], T to[M][N][O])
+{
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            for (int k = 0; k < O; k++)
+            {
                 to[i][j][k] = from[i][j][k];
             }
         }
@@ -63,26 +119,35 @@ void copy_3d(T from[M][N][O], T to[M][N][O]) {
 }
 
 template <const int M, typename T_in, typename T_out>
-void cast_1d(T_in in[M], T_out out[M]) {
-    for (int i = 0; i < M; i++) {
+void cast_1d(T_in in[M], T_out out[M])
+{
+    for (int i = 0; i < M; i++)
+    {
         out[i] = T_out(in[i]);
     }
 }
 
 template <const int M, const int N, typename T_in, typename T_out>
-void cast_2d(T_in in[M][N], T_out out[M][N]) {
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
+void cast_2d(T_in in[M][N], T_out out[M][N])
+{
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
             out[i][j] = T_out(in[i][j]);
         }
     }
 }
 
 template <const int M, const int N, const int O, typename T_in, typename T_out>
-void cast_3d(T_in in[M][N][O], T_out out[M][N][O]) {
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
-            for (int k = 0; k < O; k++) {
+void cast_3d(T_in in[M][N][O], T_out out[M][N][O])
+{
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            for (int k = 0; k < O; k++)
+            {
                 out[i][j][k] = T_out(in[i][j][k]);
             }
         }
@@ -90,7 +155,8 @@ void cast_3d(T_in in[M][N][O], T_out out[M][N][O]) {
 }
 
 template <const int M, typename T = float>
-void load_data_1d(const char *fp, T arr[M]) {
+void load_data_1d(const char *fp, T arr[M])
+{
     FILE *f;
     f = fopen(fp, "r");
     fread(arr, sizeof(T), M, f);
@@ -98,7 +164,8 @@ void load_data_1d(const char *fp, T arr[M]) {
 }
 
 template <const int M, const int N, typename T = float>
-void load_data_2d(const char *fp, T arr[M][N]) {
+void load_data_2d(const char *fp, T arr[M][N])
+{
     FILE *f;
     f = fopen(fp, "r");
     fread(arr, sizeof(T), M * N, f);
@@ -106,7 +173,8 @@ void load_data_2d(const char *fp, T arr[M][N]) {
 }
 
 template <const int M, const int N, const int O, typename T = float>
-void load_data_3d(const char *fp, T arr[M][N][O]) {
+void load_data_3d(const char *fp, T arr[M][N][O])
+{
     FILE *f;
     f = fopen(fp, "r");
     fread(arr, sizeof(T), M * N * O, f);
@@ -114,7 +182,8 @@ void load_data_3d(const char *fp, T arr[M][N][O]) {
 }
 
 template <const int M, typename T = float>
-void load_data_var_1d(const char *fp, T arr[M], int i) {
+void load_data_var_1d(const char *fp, T arr[M], int i)
+{
     FILE *f;
     f = fopen(fp, "r");
     fread(arr, sizeof(T), i, f);
@@ -122,7 +191,8 @@ void load_data_var_1d(const char *fp, T arr[M], int i) {
 }
 
 template <const int M, const int N, typename T = float>
-void load_data_var_2d(const char *fp, T arr[M][N], int i, int j) {
+void load_data_var_2d(const char *fp, T arr[M][N], int i, int j)
+{
     FILE *f;
     f = fopen(fp, "r");
     fread(arr, sizeof(T), i * j, f);
@@ -130,7 +200,8 @@ void load_data_var_2d(const char *fp, T arr[M][N], int i, int j) {
 }
 
 template <const int M, const int N, const int O, typename T = float>
-void load_data_var_3d(const char *fp, T arr[M][N][O], int i, int j, int k) {
+void load_data_var_3d(const char *fp, T arr[M][N][O], int i, int j, int k)
+{
     FILE *f;
     f = fopen(fp, "r");
     fread(arr, sizeof(T), i * j * k, f);
@@ -138,9 +209,12 @@ void load_data_var_3d(const char *fp, T arr[M][N][O], int i, int j, int k) {
 }
 
 template <const int M, typename T = float>
-bool compare_data_1d(T arr1[M], T arr2[M], float eps) {
-    for (int i = 0; i < M; i++) {
-        if (std::abs(arr1[i] - arr2[i]) > eps) {
+bool compare_data_1d(T arr1[M], T arr2[M], float eps)
+{
+    for (int i = 0; i < M; i++)
+    {
+        if (std::abs(arr1[i] - arr2[i]) > eps)
+        {
             return false;
         }
     }
@@ -148,10 +222,14 @@ bool compare_data_1d(T arr1[M], T arr2[M], float eps) {
 }
 
 template <const int M, const int N, typename T = float>
-bool compare_data_2d(T arr1[M][N], T arr2[M][N], float eps) {
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
-            if (std::abs(arr1[i][j] - arr2[i][j]) > eps) {
+bool compare_data_2d(T arr1[M][N], T arr2[M][N], float eps)
+{
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            if (std::abs(arr1[i][j] - arr2[i][j]) > eps)
+            {
                 return false;
             }
         }
@@ -160,11 +238,16 @@ bool compare_data_2d(T arr1[M][N], T arr2[M][N], float eps) {
 }
 
 template <const int M, const int N, const int O, typename T = float>
-bool compare_data_3d(T arr1[M][N][O], T arr2[M][N][O], float eps) {
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
-            for (int k = 0; k < O; k++) {
-                if (std::abs(arr1[i][j][k] - arr2[i][j][k]) > eps) {
+bool compare_data_3d(T arr1[M][N][O], T arr2[M][N][O], float eps)
+{
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            for (int k = 0; k < O; k++)
+            {
+                if (std::abs(arr1[i][j][k] - arr2[i][j][k]) > eps)
+                {
                     return false;
                 }
             }
@@ -175,9 +258,11 @@ bool compare_data_3d(T arr1[M][N][O], T arr2[M][N][O], float eps) {
 
 // compute_mae_1d
 template <const int M, typename T = float>
-float compute_mae_1d(T arr1[M], T arr2[M]) {
+float compute_mae_1d(T arr1[M], T arr2[M])
+{
     float mae = 0;
-    for (int i = 0; i < M; i++) {
+    for (int i = 0; i < M; i++)
+    {
         mae += std::abs(arr1[i] - arr2[i]);
     }
     return mae / M;
@@ -185,10 +270,13 @@ float compute_mae_1d(T arr1[M], T arr2[M]) {
 
 // compute_mae_2d
 template <const int M, const int N, typename T = float>
-float compute_mae_2d(T arr1[M][N], T arr2[M][N]) {
+float compute_mae_2d(T arr1[M][N], T arr2[M][N])
+{
     float mae = 0;
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
             mae += std::abs(arr1[i][j] - arr2[i][j]);
         }
     }
@@ -197,11 +285,15 @@ float compute_mae_2d(T arr1[M][N], T arr2[M][N]) {
 
 // compute_mae_3d
 template <const int M, const int N, const int O, typename T = float>
-float compute_mae_3d(T arr1[M][N][O], T arr2[M][N][O]) {
+float compute_mae_3d(T arr1[M][N][O], T arr2[M][N][O])
+{
     float mae = 0;
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
-            for (int k = 0; k < O; k++) {
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            for (int k = 0; k < O; k++)
+            {
                 mae += std::abs(arr1[i][j][k] - arr2[i][j][k]);
             }
         }
@@ -209,156 +301,82 @@ float compute_mae_3d(T arr1[M][N][O], T arr2[M][N][O]) {
     return mae / (M * N * O);
 }
 
-////////////////////
-// Stream Helpers //
-////////////////////
-
-// template <typename T>
-// T t_multiply(T arg) {
-//     return arg;
-// }
-
-// template <typename T, typename... Args>
-// T t_multiply(T arg, Args... args) {
-//     return arg * t_multiply(args...);
-// }
-
-// template <int... _dim_sizes>
-// struct array_shape {
-//     const int n_dims = sizeof...(_dim_sizes);
-//     const int dim_sizes[sizeof...(_dim_sizes)] = {_dim_sizes...};
-//     const int N = t_multiply(_dim_sizes...);
-// };
-
-// template <typename T, typename array_shape>
-// struct array_stream {
-//     hls::stream<T> data;
-//     using T_data = T;
-//     const array_shape shape;
-//     array_stream() {};
-// };
-
-///////////////////////////////
-// Stream <-> Array Adapters //
-///////////////////////////////
-
-// template <const int M, typename T>
-// void stream_to_array_1d(array_stream<T, array_shape<M>> &x_stream, T x_array[M]) {
-// #pragma HLS INLINE off
-//     for (int i = 0; i < M; i++) {
-//         x_array[i] = x_stream.data.read();
-//     }
-// }
-
-// template <const int M, typename T>
-// void array_to_stream_1d(T x_array[M], array_stream<T, array_shape<M>> &x_stream) {
-// #pragma HLS INLINE off
-//     for (int i = 0; i < M; i++) {
-//         x_stream.data.write(x_array[i]);
-//     }
-// }
-
-// template <const int M, const int N, typename T, typename T_array = array_stream<T, array_shape<M, N>>>
-// void stream_to_array_2d(T_array &x_stream, T x_array[M][N]) {
-// #pragma HLS INLINE off
-//     for (int i = 0; i < M; i++) {
-//         for (int j = 0; j < N; j++) {
-//             x_stream[i][j] = x_stream.data.read();
-//         }
-//     }
-// }
-
-// template <const int M, const int N, typename T, typename T_array = array_stream<T, array_shape<M, N>>>
-// void array_to_stream_2d(T x_array[M][N], T_array &x_stream) {
-// #pragma HLS INLINE off
-//     for (int i = 0; i < M; i++) {
-//         for (int j = 0; j < N; j++) {
-//             x_stream.data.write(x_array[i][j]);
-//         }
-//     }
-// }
-
-// template <const int M, const int N, const int O, typename T, typename T_array = array_stream<T, array_shape<M, N, O>>>
-// void stream_to_array_3d(T_array &x_stream, T x_array[M][N][O]) {
-// #pragma HLS INLINE off
-//     for (int i = 0; i < M; i++) {
-//         for (int j = 0; j < N; j++) {
-//             for (int k = 0; k < O; k++) {
-//                 x_stream[i][j][k] = x_stream.data.read();
-//             }
-//         }
-//     }
-// }
-
-// template <const int M, const int N, const int O, typename T, typename T_array = array_stream<T, array_shape<M, N, O>>>
-// void array_to_stream_3d(T x_array[M][N][O], T_array &x_stream) {
-// #pragma HLS INLINE off
-//     for (int i = 0; i < M; i++) {
-//         for (int j = 0; j < N; j++) {
-//             for (int k = 0; k < O; k++) {
-//                 x_stream.data.write(x_array[i][j][k]);
-//             }
-//         }
-//     }
-// }
-
 //////////////////////////
 // Activation functions //
 //////////////////////////
 
 template <typename T>
-T activation_elu(T x) {
+T activation_elu(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     const T alpha = T(1.0);
-    if (x > 0) {
+    if (x > 0)
+    {
         return x;
-    } else {
+    }
+    else
+    {
         return alpha * (m_exp(x) - T(1.0));
     }
 }
 
 template <typename T>
-T activation_hardtanh(T x) {
+T activation_hardtanh(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     const T min_val = T(-1.0);
     const T max_val = T(1.0);
-    if (x < min_val) {
+    if (x < min_val)
+    {
         return min_val;
-    } else if (x > max_val) {
+    }
+    else if (x > max_val)
+    {
         return max_val;
-    } else {
+    }
+    else
+    {
         return x;
     }
 }
 
 template <typename T>
-T activation_leakyrelu(T x) {
+T activation_leakyrelu(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     const T negative_slope = T(0.1);
 
-    if (x >= 0) {
+    if (x >= 0)
+    {
         return x;
-    } else {
+    }
+    else
+    {
         return x * negative_slope;
     }
 }
 
 template <typename T>
-T activation_relu(T x) {
+T activation_relu(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
-    if (x > 0) {
+    if (x > 0)
+    {
         return x;
-    } else {
+    }
+    else
+    {
         return 0;
     }
 }
 
 template <typename T>
-T activation_gelu(T x) {
+T activation_gelu(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     const T sqrt_2_recip = T(1.0) / m_sqrt(T(2.0));
@@ -368,7 +386,7 @@ T activation_gelu(T x) {
 
 template <typename T>
 T activation_gelu_approx_tanh(T x)
-{   
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
 
@@ -379,8 +397,10 @@ T activation_gelu_approx_tanh(T x)
 
     // prevent overflow of tanh_arg by setting limits where the
     // datatype is too coarse to represent the tanh result anyway.
-    if (x < GELU_APPROX_MIN) return T(0.0);
-    if (x > GELU_APPROX_MAX) return x;
+    if (x < GELU_APPROX_MIN)
+        return T(0.0);
+    if (x > GELU_APPROX_MAX)
+        return x;
 
     const T tanh_arg = T(T(T(GELU_TANH_COEFF_CUBIC * x) * x) + GELU_TANH_COEFF_LINEAR) * x;
     const T tanh = m_tanh(tanh_arg);
@@ -397,21 +417,24 @@ T activation_gelu_approx_tanh(T x)
 }
 
 template <typename T>
-T activation_sigmoid(T x) {
+T activation_sigmoid(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     return T(1.0) / (T(1.0) + m_exp(-x));
 }
 
 template <typename T>
-T activation_silu(T x) {
+T activation_silu(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     return x * (T(1.0) / (T(1.0) + m_exp(-x)));
 }
 
 template <typename T>
-T activation_tanh(T x) {
+T activation_tanh(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
 #if __FLOATING_POINT_MODEL__
@@ -425,28 +448,32 @@ T activation_tanh(T x) {
 }
 
 template <typename T>
-T activation_softsign(T x) {
+T activation_softsign(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     return x / (T(1.0) + m_abs(x));
 }
 
 template <typename T>
-T activation_sin(T x) {
+T activation_sin(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     return m_sin(x);
 }
 
 template <typename T>
-T activation_cos(T x) {
+T activation_cos(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     return m_cos(x);
 }
 
 template <typename T>
-T activation_identity(T x) {
+T activation_identity(T x)
+{
 #pragma HLS INLINE off
 #pragma HLS PIPELINE
     return x;
@@ -469,31 +496,176 @@ T activation_identity(T x) {
 //         }
 //     }
 // };
+// should work on 1d
+
+template<int N, typename T, T (*T_func)(T)>
+void apply_activation_1d(T_array_1d<T, N> x_in, T_array_1d<T, N> x_out)
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < N; i++)
+    {
+        x_out[i] = T_func(x_in[i]);
+    }
+}
+
+template<int M, int N, typename T, T (*T_func)(T)>
+void apply_activation_2d(T_array_2d<T, M, N> x_in, T_array_2d<T, M, N> x_out)
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+
+            x_out[i][j] = T_func(x_in[i][j]);
+        }
+    }
+}
+
+template<int M, int N, int O, typename T, T (*T_func)(T)>
+void apply_activation_3d(T_array_3d<T, M, N, O> x_in, T_array_3d<T, M, N, O> x_out)
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+
+            for (int k = 0; k < O; k++)
+            {
+                x_out[i][j][k] = T_func(x_in[i][j][k]);
+            }
+        }
+    }
+}
+
+//////////////////////////
+/// Split and Merge Sum //
+//////////////////////////
+
+template <int N, typename T>
+void split_1d(T_array_1d<T, N> x_in, T_array_1d<T, N> x_out_1, T_array_1d<T, N> x_out_2)
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < N; i++)
+    {
+        T x_in_buf = x_in[i];
+        x_out_1[i] = x_in_buf;
+        x_out_2[i] = x_in_buf;
+    }
+}
+
+template <int M, int N, typename T>
+void split_2d(T_array_2d<T, M, N> x_in, T_array_2d<T, M, N> x_out_1, T_array_2d<T, M, N> x_out_2)
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+
+            T x_in_buf = x_in[i][j];
+            x_out_1[i][j] = x_in_buf;
+            x_out_2[i][j] = x_in_buf;
+        }
+    }
+}
+
+template <int M, int N, int O, typename T>
+void split_3d(T_array_3d<T, M, N, O> x_in, T_array_3d<T, M, N, O> x_out_1, T_array_3d<T, M, N, O> x_out_2)
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+
+            for (int k = 0; k < O; k++)
+            {
+                T x_in_buf = x_in[i][j][k];
+                x_out_1[i][j][k] = x_in_buf;
+                x_out_2[i][j][k] = x_in_buf;
+            }
+        }
+    }
+}
+
+template <int N, typename T>
+void merge_sum_1d(T_array_1d<T, N> x_in_1, T_array_1d<T, N> x_in_2, T_array_1d<T, N> x_out)
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < N; i++)
+    {
+        T x_in_1_buf = x_in_1[i];
+        T x_in_2_buf = x_in_2[i];
+        x_out[i] = x_in_1_buf + x_in_2_buf;
+    }
+}
+
+template <int M, int N, typename T>
+void merge_sum_2d(T_array_2d<T, M, N> x_in_1, T_array_2d<T, M, N> x_in_2, T_array_2d<T, M, N> x_out)
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+
+            T x_in_1_buf = x_in_1[i][j];
+            T x_in_2_buf = x_in_2[i][j];
+            x_out[i][j] = x_in_1_buf + x_in_2_buf;
+        }
+    }
+}
+
+template <int M, int N, int O, typename T>
+void merge_sum_3d(T_array_3d<T, M, N, O> x_in_1, T_array_3d<T, M, N, O> x_in_2, T_array_3d<T, M, N, O> x_out)
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+
+            for (int k = 0; k < O; k++)
+            {
+                T x_in_1_buf = x_in_1[i][j][k];
+                T x_in_2_buf = x_in_2[i][j][k];
+                x_out[i][j][k] = x_in_1_buf + x_in_2_buf;
+            }
+        }
+    }
+}
+
+
 
 //////////////////////
 // Incremental mean //
 //////////////////////
 
 template <typename T>
-struct mean_incremental_data {
+struct mean_incremental_data
+{
     T sum = T(0.0);
     int count = 0;
     T mean = T(0.0);
-    int finalized = 0;
+    bool finalized = false;
 };
 
 template <typename T>
-void mean_incremental_update(mean_incremental_data<T> &data, T x) {
-// #pragma HLS INLINE off
+void mean_incremental_update(mean_incremental_data<T> &data, T x)
+{
+    // #pragma HLS INLINE off
     data.sum += x;
     data.count++;
     data.mean = data.sum / T(data.count);
 }
 
 template <typename T>
-void mean_incremental_finalize(mean_incremental_data<T> &data) {
-// #pragma HLS INLINE off
-    data.finalized = 1;
+void mean_incremental_finalize(mean_incremental_data<T> &data)
+{
+    // #pragma HLS INLINE off
+    data.finalized = true;
 }
 
 //////////////////////////
@@ -503,18 +675,20 @@ void mean_incremental_finalize(mean_incremental_data<T> &data) {
 // use Welford's online algorithm
 
 template <typename T>
-struct variance_incremental_data {
+struct variance_incremental_data
+{
     int count = 0;
     T mean = T(0.0);
     T m2 = T(0.0);
     T var = T(0.0);
     T std = T(0.0);
-    int finalized = 0;
+    bool finalized = false;
 };
 
 template <typename T>
-void variance_incremental_update(variance_incremental_data<T> &data, T x) {
-// #pragma HLS INLINE off
+void variance_incremental_update(variance_incremental_data<T> &data, T x)
+{
+    // #pragma HLS INLINE off
     data.count++;
     T delta = x - data.mean;
     data.mean += delta / T(data.count);
@@ -522,11 +696,12 @@ void variance_incremental_update(variance_incremental_data<T> &data, T x) {
 }
 
 template <typename T>
-void variance_incremental_finalize(variance_incremental_data<T> &data) {
-// #pragma HLS INLINE off
+void variance_incremental_finalize(variance_incremental_data<T> &data)
+{
+    // #pragma HLS INLINE off
     data.var = data.m2 / T(data.count);
     data.std = m_sqrt(data.var + T(1e-5));
-    data.finalized = 1;
+    data.finalized = true;
 }
 
 /////////////////////
@@ -534,21 +709,24 @@ void variance_incremental_finalize(variance_incremental_data<T> &data) {
 /////////////////////
 
 template <typename T>
-struct sum_incremental_data {
+struct sum_incremental_data
+{
     T sum = T(0.0);
-    int finalized = 0;
+    bool finalized = false;
 };
 
 template <typename T>
-void sum_incremental_update(sum_incremental_data<T> &data, T x) {
-// #pragma HLS INLINE off
+void sum_incremental_update(sum_incremental_data<T> &data, T x)
+{
+    // #pragma HLS INLINE off
     data.sum += x;
 }
 
 template <typename T>
-void sum_incremental_finalize(sum_incremental_data<T> &data) {
-// #pragma HLS INLINE off
-    data.finalized = 1;
+void sum_incremental_finalize(sum_incremental_data<T> &data)
+{
+    // #pragma HLS INLINE off
+    data.finalized = true;
 }
 
 /////////////////////
@@ -556,29 +734,36 @@ void sum_incremental_finalize(sum_incremental_data<T> &data) {
 /////////////////////
 
 template <typename T>
-struct max_incremental_data {
+struct max_incremental_data
+{
     T max = T(0.0);
-    int one_sample_processed = 0;
-    int finalized = 0;
+    bool one_sample_processed = false;
+    bool finalized = false;
 };
 
 template <typename T>
-void max_incremental_update(max_incremental_data<T> &data, T x) {
-// #pragma HLS INLINE off
-    if (data.one_sample_processed == 0) {
+void max_incremental_update(max_incremental_data<T> &data, T x)
+{
+    // #pragma HLS INLINE off
+    if (data.one_sample_processed == false)
+    {
         data.max = x;
-        data.one_sample_processed = 1;
-    } else {
-        if (x > data.max) {
+        data.one_sample_processed = true;
+    }
+    else
+    {
+        if (x > data.max)
+        {
             data.max = x;
         }
     }
 }
 
 template <typename T>
-void max_incremental_finalize(max_incremental_data<T> &data) {
-// #pragma HLS INLINE off
-    data.finalized = 1;
+void max_incremental_finalize(max_incremental_data<T> &data)
+{
+    // #pragma HLS INLINE off
+    data.finalized = true;
 }
 
 /////////////////////
@@ -586,29 +771,34 @@ void max_incremental_finalize(max_incremental_data<T> &data) {
 /////////////////////
 
 template <typename T>
-struct min_incremental_data {
+struct min_incremental_data
+{
     T min = T(0.0);
-    int one_sample_processed = 0;
-    int finalized = 0;
+    bool one_sample_processed = false;
+    bool finalized = false;
 };
 
 template <typename T>
-void min_incremental_update(min_incremental_data<T> &data, T x) {
-#pragma HLS INLINE off
-    if (data.one_sample_processed == 0) {
+void min_incremental_update(min_incremental_data<T> &data, T x)
+{
+    if (data.one_sample_processed == false)
+    {
         data.min = x;
-        data.one_sample_processed = 1;
-    } else {
-        if (x < data.min) {
+        data.one_sample_processed = true;
+    }
+    else
+    {
+        if (x < data.min)
+        {
             data.min = x;
         }
     }
 }
 
 template <typename T>
-void min_incremental_finalize(min_incremental_data<T> &data) {
-#pragma HLS INLINE off
-    data.finalized = 1;
+void min_incremental_finalize(min_incremental_data<T> &data)
+{
+    data.finalized = true;
 }
 
 //////////////////
@@ -622,7 +812,8 @@ template <const int in_size, const int out_size,
 void linear(T input[in_size],
             T output[out_size],
             T weight[out_size][in_size],
-            T bias[out_size]) {
+            T bias[out_size])
+{
 #pragma HLS INLINE off
 
     static_assert(in_size % BLOCK_SIZE_IN_ == 0, "in_size must be divisible by BLOCK_SIZE_IN");
@@ -645,23 +836,58 @@ void linear(T input[in_size],
 
 #pragma HLS ARRAY_PARTITION variable = temp_sum complete
 
+    // set bias on output
+    // BIAS_BLOCK_OUT:
+    //     for (int i = 0; i < out_size; i += BLOCK_SIZE_OUT)
+    //     {
+
+    //     #pragma HLS PIPELINE
+    //         for (int j = 0; j < BLOCK_SIZE_OUT; j++)
+    //         {
+    //             output[i + j] = bias[i + j];
+    //         }
+    //     }
+
+    // set bias on output
+BIAS_BLOCK_OUT:
+    for (int a = 0; a < out_size; a += BLOCK_SIZE_OUT)
+    {
+#pragma HLS unroll off = true
+#pragma HLS PIPELINE
+    BIAS_WRITE:
+        for (int b = 0; b < BLOCK_SIZE_OUT; b++)
+        {
+#pragma HLS unroll
+            int tmp_idx = a + b;
+            output[tmp_idx] = bias[tmp_idx];
+        }
+    }
+
 BLOCK_OUT:
-    for (int i = 0; i < out_size; i += BLOCK_SIZE_OUT) {
+    for (int i = 0; i < out_size; i += BLOCK_SIZE_OUT)
+    {
     BLOCK_IN:
-        for (int j = 0; j < in_size; j += BLOCK_SIZE_IN) {
+        for (int j = 0; j < in_size; j += BLOCK_SIZE_IN)
+        {
 
 #pragma HLS PIPELINE
         // zero temp sum
         TEMP_SUM_ZERO_LOOP:
-            for (int k = 0; k < BLOCK_SIZE_OUT; k++) {
+            for (int k = 0; k < BLOCK_SIZE_OUT; k++)
+            {
+#pragma HLS unroll
                 temp_sum[k] = 0;
             }
 
         // compute temp sum
         SUM_OUTER:
-            for (int k = 0; k < BLOCK_SIZE_OUT; k++) {
+            for (int k = 0; k < BLOCK_SIZE_OUT; k++)
+            {
+#pragma HLS unroll
             SUM_INNER:
-                for (int l = 0; l < BLOCK_SIZE_IN; l++) {
+                for (int l = 0; l < BLOCK_SIZE_IN; l++)
+                {
+#pragma HLS unroll
                     temp_sum[k] += weight[i + k][j + l] * input[j + l];
                 }
             }
@@ -669,14 +895,9 @@ BLOCK_OUT:
         // write temp sum to output
         // aslo write bias to output on first block itteration
         WRITE_LOOP:
-            for (int k = 0; k < BLOCK_SIZE_OUT; k++) {
-
-                // check if first block itteration
-                // if first block itteration, write bias
-                if (j == 0) {
-                    output[i + k] = bias[i + k];
-                }
-
+            for (int k = 0; k < BLOCK_SIZE_OUT; k++)
+            {
+#pragma HLS unroll
                 output[i + k] += temp_sum[k];
             }
         }
@@ -691,7 +912,8 @@ template <const int in_size, const int out_size,
 void linear_buffered(T input[in_size],
                      T output[out_size],
                      T weight[out_size][in_size],
-                     T bias[out_size]) {
+                     T bias[out_size])
+{
 #pragma HLS INLINE off
 
     static_assert(in_size % BLOCK_SIZE_IN_ == 0, "in_size must be divisible by BLOCK_SIZE_IN");
@@ -711,55 +933,71 @@ void linear_buffered(T input[in_size],
     // block parallel linear layer
     // use temp sum
     F_TYPE temp_sum[BLOCK_SIZE_OUT];
-    #pragma HLS ARRAY_PARTITION variable = temp_sum complete
-
+#pragma HLS ARRAY_PARTITION variable = temp_sum complete
 
     // output buffer
     F_TYPE output_buffer[out_size];
-    #pragma HLS array_partition variable = output_buffer cyclic factor = BLOCK_SIZE_OUT dim = 1
+#pragma HLS array_partition variable = output_buffer cyclic factor = BLOCK_SIZE_OUT dim = 1
 
-    // zero output buffer
+    // set bias on output
+BIAS_BLOCK_OUT:
+    for (int a = 0; a < out_size; a += BLOCK_SIZE_OUT)
+    {
+#pragma HLS unroll off = true
+#pragma HLS PIPELINE
+    BIAS_WRITE:
+        for (int b = 0; b < BLOCK_SIZE_OUT; b++)
+        {
+#pragma HLS unroll
+            int tmp_idx = a + b;
+            output_buffer[tmp_idx] = bias[tmp_idx];
+        }
+    }
 
-    BLOCK_OUT:
-    for (int i = 0; i < out_size; i += BLOCK_SIZE_OUT) {
-        BLOCK_IN:
-        for (int j = 0; j < in_size; j += BLOCK_SIZE_IN) {
+BLOCK_OUT:
+    for (int i = 0; i < out_size; i += BLOCK_SIZE_OUT)
+    {
+    BLOCK_IN:
+        for (int j = 0; j < in_size; j += BLOCK_SIZE_IN)
+        {
 
-            #pragma HLS PIPELINE
-            // zero temp sum
-            TEMP_SUM_ZERO_LOOP:
-            for (int k = 0; k < BLOCK_SIZE_OUT; k++) {
+#pragma HLS PIPELINE
+        // zero temp sum
+        TEMP_SUM_ZERO_LOOP:
+            for (int k = 0; k < BLOCK_SIZE_OUT; k++)
+            {
+#pragma HLS unroll
                 temp_sum[k] = 0;
             }
 
-            // compute temp sum
-            SUM_OUTER:
-            for (int k = 0; k < BLOCK_SIZE_OUT; k++) {
-                SUM_INNER:
-                for (int l = 0; l < BLOCK_SIZE_IN; l++) {
+        // compute temp sum
+        SUM_OUTER:
+            for (int k = 0; k < BLOCK_SIZE_OUT; k++)
+            {
+            SUM_INNER:
+#pragma HLS unroll
+                for (int l = 0; l < BLOCK_SIZE_IN; l++)
+                {
+#pragma HLS unroll
                     temp_sum[k] += weight[i + k][j + l] * input[j + l];
                 }
             }
 
-            // write temp sum to output
-            // aslo write bias to output on first block itteration
-            WRITE_LOOP:
-            for (int k = 0; k < BLOCK_SIZE_OUT; k++) {
-
-                // check if first block itteration
-                // if first block itteration, write bias
-                if (j == 0) {
-                    output_buffer[i + k] = bias[i + k];
-                }
-
+        // write temp sum to output
+        // aslo write bias to output on first block itteration
+        WRITE_LOOP:
+            for (int k = 0; k < BLOCK_SIZE_OUT; k++)
+            {
+#pragma HLS unroll
                 output_buffer[i + k] += temp_sum[k];
             }
         }
     }
 
-    // write output buffer to output
-    WRITE_OUTPUT_LOOP:
-    for (int i = 0; i < out_size; i++) {
+// write output buffer to output
+WRITE_OUTPUT_LOOP:
+    for (int i = 0; i < out_size; i++)
+    {
         output[i] = output_buffer[i];
     }
 }
@@ -768,19 +1006,41 @@ void linear_buffered(T input[in_size],
 // simple linear layer //
 /////////////////////////
 
+// template <const int in_size, const int out_size,
+//           typename T>
+// void linear_simple(T input[in_size],
+//                    T output[out_size],
+//                    T weight[out_size][in_size],
+//                    T bias[out_size])
+// {
+// #pragma HLS INLINE off
+
+//     for (int i = 0; i < out_size; i++)
+//     {
+//         output[i] = bias[i];
+//         for (int j = 0; j < in_size; j++)
+//         {
+//             output[i] += weight[i][j] * input[j];
+//         }
+//     }
+// }
+
 template <const int in_size, const int out_size,
           typename T>
-void linear_simple(T input[in_size],
-                   T output[out_size],
-                   T weight[out_size][in_size],
-                   T bias[out_size]) {
+void linear_simple(T_array_1d<T, in_size> input,
+                   T_array_1d<T, out_size> output,
+                   T_linear_weight_array<T, in_size, out_size> weight,
+                   T_linear_bias_array<T, out_size> bias)
+{
 #pragma HLS INLINE off
 
-    for (int i = 0; i < out_size; i++) {
-        for (int j = 0; j < in_size; j++) {
+    for (int i = 0; i < out_size; i++)
+    {
+        output[i] = bias[i];
+        for (int j = 0; j < in_size; j++)
+        {
             output[i] += weight[i][j] * input[j];
         }
-        output[i] += bias[i];
     }
 }
 
@@ -793,22 +1053,25 @@ void compute_degree_tables(int edge_list[MAX_EDGES][2],
                            int in_degree_table[MAX_NODES],
                            int out_degree_table[MAX_NODES],
                            int num_nodes,
-                           int num_edges) {
+                           int num_edges)
+{
 #pragma HLS INLINE off
 
     //  edge list is a COO format
     //  edge_list[i][0] = source node
     //  edge_list[i][1] = destination node
 
-    for (int i = 0; i < num_nodes; i++) {
-#pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
+    for (int i = 0; i < num_nodes; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
 
         in_degree_table[i] = 0;
         out_degree_table[i] = 0;
     }
 
-    for (int i = 0; i < num_edges; i++) {
-#pragma HLS loop_tripcount min = 0 max = NUM_EDGES_GUESS
+    for (int i = 0; i < num_edges; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_EDGES_GUESS
 #pragma HLS PIPELINE off
 
         int source = edge_list[i][0];
@@ -824,10 +1087,11 @@ template <int MAX_NODES, int MAX_EDGES, int NUM_NODES_GUESS = MAX_NODES, int NUM
 void compute_neighbor_tables(int edge_list[MAX_EDGES][2],
                              int in_degree_table[MAX_NODES],
                              int out_degree_table[MAX_NODES],
-                             int neightbor_table_offsets[MAX_NODES],
-                             int neighbor_table[MAX_EDGES],
+                             int neightbor_table_offsets[MAX_NODES], // store offsets for neighbor table
+                             int neighbor_table[MAX_EDGES], // store neighbors
                              int num_nodes,
-                             int num_edges) {
+                             int num_edges)
+{
 
 #pragma HLS INLINE off
 
@@ -837,16 +1101,18 @@ void compute_neighbor_tables(int edge_list[MAX_EDGES][2],
     int neightbor_table_offsets_temp[MAX_NODES];
     neightbor_table_offsets[0] = 0;
     neightbor_table_offsets_temp[0] = 0;
-    for (int i = 1; i < num_nodes; i++) {
-#pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
+    for (int i = 1; i < num_nodes; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
         int csum = neightbor_table_offsets[i - 1] + in_degree_table[i - 1];
         neightbor_table_offsets[i] = csum;
         neightbor_table_offsets_temp[i] = csum;
     }
 
     // compute neighbor table
-    for (int i = 0; i < num_edges; i++) {
-#pragma HLS loop_tripcount min = 0 max = NUM_EDGES_GUESS
+    for (int i = 0; i < num_edges; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_EDGES_GUESS
 #pragma HLS PIPELINE off
         int source = edge_list[i][0];
         int dest = edge_list[i][1];
@@ -857,21 +1123,86 @@ void compute_neighbor_tables(int edge_list[MAX_EDGES][2],
     }
 }
 
+template <int MAX_NODES, int MAX_EDGES, int NUM_NODES_GUESS = MAX_NODES, int NUM_EDGES_GUESS = MAX_EDGES>
+void compute_neighbor_and_edge_index_tables(int edge_list[MAX_EDGES][2],
+                             int in_degree_table[MAX_NODES],
+                             int out_degree_table[MAX_NODES],
+                             int neightbor_table_offsets[MAX_NODES], // store offsets for neighbor table
+                             int neighbor_table[MAX_EDGES], // store neighbors
+                             int edge_index_table[MAX_EDGES], // for each neighbor, store the edge index
+                             int num_nodes,
+                             int num_edges)
+{
+
+#pragma HLS INLINE off
+
+    // compute neighbor table offsets
+    // cumulative sum of in_degree_table
+    // also store values temp array for later
+    int neightbor_table_offsets_temp[MAX_NODES];
+    neightbor_table_offsets[0] = 0;
+    neightbor_table_offsets_temp[0] = 0;
+    for (int i = 1; i < num_nodes; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
+        int csum = neightbor_table_offsets[i - 1] + in_degree_table[i - 1];
+        neightbor_table_offsets[i] = csum;
+        neightbor_table_offsets_temp[i] = csum;
+    }
+
+    // compute neighbor table
+    for (int i = 0; i < num_edges; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_EDGES_GUESS
+#pragma HLS PIPELINE off
+        int source = edge_list[i][0];
+        int dest = edge_list[i][1];
+
+        int offset = neightbor_table_offsets_temp[dest];
+        neighbor_table[offset] = source;
+        edge_index_table[offset] = i;
+        neightbor_table_offsets_temp[dest]++;
+    }
+}
+
 template <int MAX_NODES, int MAX_EDGES, int NUM_NODES_GUESS = MAX_NODES, int NUM_EDGES_GUESS = MAX_EDGES, int DEGREE_GUESS = MAX_NODES>
 void gather_node_neighbors(
     int node,
     int node_in_degree,
     int node_neighbors[MAX_NODES],
     int neightbor_table_offsets[MAX_NODES],
-    int neighbor_table[MAX_EDGES]) {
+    int neighbor_table[MAX_EDGES])
+{
 
-// #pragma HLS INLINE off
-#pragma HLS INLINE
+#pragma HLS INLINE off
+    // #pragma HLS INLINE
 
     int node_offset = neightbor_table_offsets[node];
-    for (int i = 0; i < node_in_degree; i++) {
-#pragma HLS loop_tripcount min = 0 max = DEGREE_GUESS
-        node_neighbors[i] = neighbor_table[node_offset + i];
+    for (int i = 0; i < node_in_degree; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = DEGREE_GUESS
+        int current_idx = node_offset + i;
+        node_neighbors[i] = neighbor_table[current_idx];
+    }
+}
+
+template <int MAX_NODES, int MAX_EDGES, int NUM_NODES_GUESS = MAX_NODES, int NUM_EDGES_GUESS = MAX_EDGES, int DEGREE_GUESS = MAX_NODES>
+void gather_node_neighbors_and_edge_indices(
+    int node,
+    int node_in_degree,
+    int node_neighbors[MAX_NODES],
+    int node_edge_indices[MAX_NODES],
+    int neightbor_table_offsets[MAX_NODES],
+    int neighbor_table[MAX_EDGES],
+    int edge_index_table[MAX_EDGES])
+{
+    int node_offset = neightbor_table_offsets[node];
+    for (int i = 0; i < node_in_degree; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = DEGREE_GUESS
+        int current_idx = node_offset + i;
+        node_neighbors[i] = neighbor_table[current_idx];
+        node_edge_indices[i] = edge_index_table[current_idx];
     }
 }
 
@@ -895,18 +1226,20 @@ void gcn_conv_agg(
     int neighbors[MAX_NODES],
     T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
     int in_degree_table[MAX_NODES],
-    T agg_embedding[EMB_SIZE_IN]
-){
+    T agg_embedding[EMB_SIZE_IN])
+{
 #pragma HLS INLINE off
 
     sum_incremental_data<T> neighbor_emb_aggregation_sum[EMB_SIZE_IN];
-    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++) {
-        #pragma HLS loop_tripcount min = 0 max = DEGREE_GUESS
+    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++)
+    {
+#pragma HLS loop_tripcount min = 1 max = DEGREE_GUESS
 
         T neighbor_emb[EMB_SIZE_IN];
 
         int neighbor_id = neighbors[neighbor];
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             neighbor_emb[i] = node_embedding_table_in[neighbor_id][i];
         }
 
@@ -919,11 +1252,13 @@ void gcn_conv_agg(
         T degree_scaling_factor = m_recip(T(m_sqrt(d_i_prime * d_j_prime)));
 
         T neighbor_emb_transformed[EMB_SIZE_IN];
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             neighbor_emb_transformed[i] = neighbor_emb[i] * degree_scaling_factor;
         }
 
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             sum_incremental_update(neighbor_emb_aggregation_sum[i], neighbor_emb_transformed[i]);
         }
     }
@@ -932,19 +1267,23 @@ void gcn_conv_agg(
     T degree_scaling_factor_self = m_recip(m_sqrt(d_i_prime * d_i_prime));
 
     T self_emb_transformed[EMB_SIZE_IN];
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         self_emb_transformed[i] = current_node_embedding_in[i] * degree_scaling_factor_self;
     }
 
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         sum_incremental_update(neighbor_emb_aggregation_sum[i], self_emb_transformed[i]);
     }
 
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         sum_incremental_finalize(neighbor_emb_aggregation_sum[i]);
     }
 
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         agg_embedding[i] = neighbor_emb_aggregation_sum[i].sum;
     }
 }
@@ -970,23 +1309,34 @@ void gcn_conv(
     int in_degree_table[MAX_NODES],
     int out_degree_table[MAX_NODES],
     T apply_lin_weight[EMB_SIZE_OUT][EMB_SIZE_IN],
-    T apply_lin_bias[EMB_SIZE_OUT]
-) {
+    T apply_lin_bias[EMB_SIZE_OUT])
+{
 
-    #pragma HLS INLINE off
+#pragma HLS INLINE off
 
-    for (int node = 0; node < num_nodes; node++) {
-        #pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
+    for (int node = 0; node < num_nodes; node++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
 
-        #pragma HLS DATAFLOW
-        #pragma HLS stable variable=edge_list
-        #pragma HLS stable variable=neightbor_table_offsets
-        #pragma HLS stable variable=neighbor_table
-        #pragma HLS stable variable=in_degree_table
-        #pragma HLS stable variable=out_degree_table
+        // #pragma HLS DATAFLOW
+
+#pragma HLS stable variable = num_nodes
+#pragma HLS stable variable = num_edges
+
+        // #pragma HLS stable variable = edge_list
+        // #pragma HLS stable variable = neightbor_table_offsets
+        // #pragma HLS stable variable = neighbor_table
+        // #pragma HLS stable variable = in_degree_table
+        // #pragma HLS stable variable = out_degree_table
+
+        // #pragma HLS stable variable = apply_lin_weight
+        // #pragma HLS stable variable = apply_lin_bias
+
+
 
         T current_node_embedding_in[EMB_SIZE_IN];
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             current_node_embedding_in[i] = node_embedding_table_in[node][i];
         }
 
@@ -998,14 +1348,12 @@ void gcn_conv(
             MAX_EDGES,
             NUM_NODES_GUESS,
             NUM_EDGES_GUESS,
-            DEGREE_GUESS
-        >(
+            DEGREE_GUESS>(
             node,
             num_in_neighbors,
             neighbors,
             neightbor_table_offsets,
-            neighbor_table
-        );
+            neighbor_table);
 
         T agg_embedding[EMB_SIZE_IN];
         gcn_conv_agg<
@@ -1018,23 +1366,21 @@ void gcn_conv(
             NUM_EDGES_GUESS,
             DEGREE_GUESS,
             P_IN,
-            P_OUT
-        >
-        (
+            P_OUT>(
             current_node_embedding_in,
             num_in_neighbors,
             neighbors,
             node_embedding_table_in,
             in_degree_table,
-            agg_embedding
-        );
+            agg_embedding);
 
         // compute new node embedding
         T new_node_embedding[EMB_SIZE_OUT];
         linear<EMB_SIZE_IN, EMB_SIZE_OUT, P_IN, P_OUT, T>(agg_embedding, new_node_embedding, apply_lin_weight, apply_lin_bias);
 
         // node_embedding_table_out[node] = new_node_embedding;
-        for (int i = 0; i < EMB_SIZE_OUT; i++) {
+        for (int i = 0; i < EMB_SIZE_OUT; i++)
+        {
             node_embedding_table_out[node][i] = new_node_embedding[i];
         }
     }
@@ -1051,37 +1397,41 @@ template <
     int NUM_EDGES_GUESS = MAX_EDGES,
     int DEGREE_GUESS = MAX_NODES,
     int P_IN = 1,
-    int P_OUT = 1
->
+    int P_OUT = 1>
 void gin_conv_agg(
     int num_in_neighbors,
     int neighbors[MAX_NODES],
     T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
-    T agg_embedding[EMB_SIZE_IN]
-){
-    #pragma HLS INLINE off
+    T agg_embedding[EMB_SIZE_IN])
+{
+#pragma HLS INLINE off
 
     sum_incremental_data<T> neighbor_emb_aggregation_sum[EMB_SIZE_IN];
-    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++) {
-        #pragma HLS loop_tripcount min = 0 max = DEGREE_GUESS
+    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++)
+    {
+#pragma HLS loop_tripcount min = 1 max = DEGREE_GUESS
 
         T neighbor_emb[EMB_SIZE_IN];
 
         int neighbor_id = neighbors[neighbor];
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             neighbor_emb[i] = node_embedding_table_in[neighbor_id][i];
         }
 
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             sum_incremental_update(neighbor_emb_aggregation_sum[i], neighbor_emb[i]);
         }
     }
 
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         sum_incremental_finalize(neighbor_emb_aggregation_sum[i]);
     }
 
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         agg_embedding[i] = neighbor_emb_aggregation_sum[i].sum;
     }
 }
@@ -1098,8 +1448,7 @@ template <
     int NUM_EDGES_GUESS = MAX_EDGES,
     int DEGREE_GUESS = MAX_NODES,
     int P_IN = 1,
-    int P_OUT = 1
->
+    int P_OUT = 1>
 void gin_conv(
     int num_nodes,
     int num_edges,
@@ -1114,21 +1463,23 @@ void gin_conv(
     T apply_mlp_0_bias[HIDDEN_FEATURE_SIZE],
     T apply_mlp_1_weight[EMB_SIZE_OUT][HIDDEN_FEATURE_SIZE],
     T apply_mlp_1_bias[EMB_SIZE_OUT],
-    T gin_eps
-) {
+    T gin_eps)
+{
 
-    for (int node = 0; node < num_nodes; node++) {
-        #pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
+    for (int node = 0; node < num_nodes; node++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
 
-        #pragma HLS DATAFLOW
-        #pragma HLS stable variable=edge_list
-        #pragma HLS stable variable=neightbor_table_offsets
-        #pragma HLS stable variable=neighbor_table
-        #pragma HLS stable variable=in_degree_table
-        #pragma HLS stable variable=out_degree_table
+        // #pragma HLS DATAFLOW
+        // #pragma HLS stable variable = edge_list
+        // #pragma HLS stable variable = neightbor_table_offsets
+        // #pragma HLS stable variable = neighbor_table
+        // #pragma HLS stable variable = in_degree_table
+        // #pragma HLS stable variable = out_degree_table
 
         T current_node_embedding_in[EMB_SIZE_IN];
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             current_node_embedding_in[i] = node_embedding_table_in[node][i];
         }
 
@@ -1159,21 +1510,21 @@ void gin_conv(
             NUM_EDGES_GUESS,
             DEGREE_GUESS,
             P_IN,
-            P_OUT
-        >(
+            P_OUT>(
             num_in_neighbors,
             neighbors,
             node_embedding_table_in,
-            agg_embedding
-        );
+            agg_embedding);
 
         T self_emb_scaled[EMB_SIZE_IN];
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             self_emb_scaled[i] = current_node_embedding_in[i] * (T(1) + gin_eps);
         }
 
         T agg_embedding_plus_scaled_self[EMB_SIZE_IN];
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             agg_embedding_plus_scaled_self[i] = agg_embedding[i] + self_emb_scaled[i];
         }
 
@@ -1184,18 +1535,219 @@ void gin_conv(
 
         // linear<EMB_SIZE_IN, EMB_SIZE_OUT>(agg_embedding, new_node_embedding, apply_lin_weight, apply_lin_bias);
         linear<EMB_SIZE_IN, HIDDEN_FEATURE_SIZE, P_IN, P_IN, T>(agg_embedding_plus_scaled_self, new_node_embedding_hidden_emb, apply_mlp_0_weight, apply_mlp_0_bias);
-        for (int i = 0; i < HIDDEN_FEATURE_SIZE; i++) {
+        for (int i = 0; i < HIDDEN_FEATURE_SIZE; i++)
+        {
             new_node_embedding_hidden_emb_act[i] = activation_relu<T>(new_node_embedding_hidden_emb[i]);
         }
         linear<HIDDEN_FEATURE_SIZE, EMB_SIZE_OUT, P_IN, P_OUT, T>(new_node_embedding_hidden_emb_act, new_node_embedding, apply_mlp_1_weight, apply_mlp_1_bias);
 
-        for (int i = 0; i < EMB_SIZE_OUT; i++) {
+        for (int i = 0; i < EMB_SIZE_OUT; i++)
+        {
             node_embedding_table_out[node][i] = new_node_embedding[i];
         }
     }
 }
 
-template<
+
+// GIN-E
+// GIN with edge features
+
+template <
+    int MAX_NODES,
+    int MAX_EDGES,
+    int EMB_SIZE_IN,
+    int EMB_SIZE_OUT,
+    int HIDDEN_FEATURE_SIZE,
+    int EDGE_FEATURE_SIZE,
+    typename T,
+    int NUM_NODES_GUESS = MAX_NODES,
+    int NUM_EDGES_GUESS = MAX_EDGES,
+    int DEGREE_GUESS = MAX_NODES,
+    int P_IN = 1,
+    int P_OUT = 1>
+void gine_conv_agg(
+    int num_in_neighbors,
+    int neighbors[MAX_NODES],
+    int neighbor_edge_indexs[MAX_NODES],
+    T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
+    T edge_feature_table[MAX_EDGES][EDGE_FEATURE_SIZE],
+    T agg_embedding[EMB_SIZE_IN],
+    T edge_proj_weight[EMB_SIZE_IN][EDGE_FEATURE_SIZE],
+    T edge_proj_bias[EMB_SIZE_IN])
+{
+#pragma HLS INLINE off
+
+    sum_incremental_data<T> neighbor_emb_aggregation_sum[EMB_SIZE_IN];
+    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++)
+    {
+#pragma HLS loop_tripcount min = 1 max = DEGREE_GUESS
+
+        T neighbor_emb[EMB_SIZE_IN];
+        int neighbor_id = neighbors[neighbor];
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            neighbor_emb[i] = node_embedding_table_in[neighbor_id][i];
+        }
+
+        T edge_feature[EDGE_FEATURE_SIZE];
+        int edge_index = neighbor_edge_indexs[neighbor];
+        for (int i = 0; i < EDGE_FEATURE_SIZE; i++)
+        {
+            edge_feature[i] = edge_feature_table[edge_index][i];
+        }
+
+        T edge_proj[EMB_SIZE_IN];
+        linear<EDGE_FEATURE_SIZE, EMB_SIZE_IN, P_IN, P_IN, T>(edge_feature, edge_proj, edge_proj_weight, edge_proj_bias);
+
+        T message[EMB_SIZE_IN];
+        merge_sum_1d<EMB_SIZE_IN>(neighbor_emb, edge_proj, message);
+
+        T message_act[EMB_SIZE_IN];
+        apply_activation_1d<EMB_SIZE_IN, T, activation_relu>(message, message_act);
+
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            sum_incremental_update(neighbor_emb_aggregation_sum[i], message_act[i]);
+        }
+    }
+
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
+        sum_incremental_finalize(neighbor_emb_aggregation_sum[i]);
+    }
+
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
+        agg_embedding[i] = neighbor_emb_aggregation_sum[i].sum;
+    }
+}
+
+
+
+template <
+    int MAX_NODES,
+    int MAX_EDGES,
+    int EMB_SIZE_IN,
+    int EMB_SIZE_OUT,
+    int HIDDEN_FEATURE_SIZE,
+    int EDGE_FEATURE_SIZE,
+    typename T,
+    int NUM_NODES_GUESS = MAX_NODES,
+    int NUM_EDGES_GUESS = MAX_EDGES,
+    int DEGREE_GUESS = MAX_NODES,
+    int P_IN = 1,
+    int P_OUT = 1>
+void gine_conv(
+    int num_nodes,
+    int num_edges,
+    T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
+    T node_embedding_table_out[MAX_NODES][EMB_SIZE_OUT],
+    T edge_feature_table[MAX_EDGES][EDGE_FEATURE_SIZE],
+    int edge_list[MAX_EDGES][2],
+    int neightbor_table_offsets[MAX_NODES],
+    int neighbor_table[MAX_EDGES],
+    int edge_index_table[MAX_EDGES],
+    int in_degree_table[MAX_NODES],
+    int out_degree_table[MAX_NODES],
+    T edge_proj_weight[EMB_SIZE_IN][EDGE_FEATURE_SIZE],
+    T edge_proj_bias[EMB_SIZE_IN],
+    T apply_mlp_0_weight[HIDDEN_FEATURE_SIZE][EMB_SIZE_IN],
+    T apply_mlp_0_bias[HIDDEN_FEATURE_SIZE],
+    T apply_mlp_1_weight[EMB_SIZE_OUT][HIDDEN_FEATURE_SIZE],
+    T apply_mlp_1_bias[EMB_SIZE_OUT],
+    T gin_eps)
+{
+    for (int node = 0; node < num_nodes; node++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
+
+        T current_node_embedding_in[EMB_SIZE_IN];
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            current_node_embedding_in[i] = node_embedding_table_in[node][i];
+        }
+
+        int num_in_neighbors = in_degree_table[node];
+        int neighbors[MAX_NODES];
+        int neighbor_edge_indexs[MAX_NODES];
+
+        gather_node_neighbors_and_edge_indices<
+            MAX_NODES,
+            MAX_EDGES,
+            NUM_NODES_GUESS,
+            NUM_EDGES_GUESS,
+            DEGREE_GUESS>(
+            node,
+            num_in_neighbors,
+            neighbors,
+            neighbor_edge_indexs,
+            neightbor_table_offsets,
+            neighbor_table,
+            edge_index_table);
+
+        T agg_embedding[EMB_SIZE_IN];
+        gine_conv_agg<
+            MAX_NODES,
+            MAX_EDGES,
+            EMB_SIZE_IN,
+            EMB_SIZE_OUT,
+            HIDDEN_FEATURE_SIZE,
+            EDGE_FEATURE_SIZE,
+            T,
+            NUM_NODES_GUESS,
+            NUM_EDGES_GUESS,
+            DEGREE_GUESS,
+            P_IN,
+            P_OUT>(
+            num_in_neighbors,
+            neighbors,
+            neighbor_edge_indexs,
+            node_embedding_table_in,
+            edge_feature_table,
+            agg_embedding,
+            edge_proj_weight,
+            edge_proj_bias);
+
+
+        T self_emb_scaled[EMB_SIZE_IN];
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            self_emb_scaled[i] = current_node_embedding_in[i] * (T(1) + gin_eps);
+        }
+
+        T agg_embedding_plus_scaled_self[EMB_SIZE_IN];
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            agg_embedding_plus_scaled_self[i] = agg_embedding[i] + self_emb_scaled[i];
+        }
+
+        // compute new node embedding
+        T new_node_embedding_hidden_emb[HIDDEN_FEATURE_SIZE];
+        T new_node_embedding_hidden_emb_act[HIDDEN_FEATURE_SIZE];
+        T new_node_embedding[EMB_SIZE_OUT];
+
+        // linear<EMB_SIZE_IN, EMB_SIZE_OUT>(agg_embedding, new_node_embedding, apply_lin_weight, apply_lin_bias);
+        linear<EMB_SIZE_IN, HIDDEN_FEATURE_SIZE, P_IN, P_IN, T>(agg_embedding_plus_scaled_self, new_node_embedding_hidden_emb, apply_mlp_0_weight, apply_mlp_0_bias);
+        for (int i = 0; i < HIDDEN_FEATURE_SIZE; i++)
+        {
+            new_node_embedding_hidden_emb_act[i] = activation_relu<T>(new_node_embedding_hidden_emb[i]);
+        }
+        linear<HIDDEN_FEATURE_SIZE, EMB_SIZE_OUT, P_IN, P_OUT, T>(new_node_embedding_hidden_emb_act, new_node_embedding, apply_mlp_1_weight, apply_mlp_1_bias);
+
+        for (int i = 0; i < EMB_SIZE_OUT; i++)
+        {
+            node_embedding_table_out[node][i] = new_node_embedding[i];
+        }
+    }
+}
+
+
+
+
+
+
+
+template <
     int MAX_NODES,
     int MAX_EDGES,
     int EMB_SIZE_IN,
@@ -1209,8 +1761,7 @@ template<
     int NUM_EDGES_GUESS = MAX_EDGES,
     int DEGREE_GUESS = MAX_NODES,
     int P_IN = 1,
-    int P_OUT = 1
->
+    int P_OUT = 1>
 void pna_conv_agg(
     int num_in_neighbors,
     int neighbors[MAX_NODES],
@@ -1221,29 +1772,32 @@ void pna_conv_agg(
     T neighbor_emb_agg_mean[EMB_SIZE_IN],
     T neighbor_emb_agg_variance[EMB_SIZE_IN],
     T transfrom_lin_weight[TRANSFORM_OUT][TRANSFORM_IN],
-    T transfrom_lin_bias[TRANSFORM_OUT]
-){
-    #pragma HLS INLINE off
+    T transfrom_lin_bias[TRANSFORM_OUT])
+{
+#pragma HLS INLINE off
 
     max_incremental_data<T> neighbor_emb_aggregation_max[EMB_SIZE_IN];
     min_incremental_data<T> neighbor_emb_aggregation_min[EMB_SIZE_IN];
     mean_incremental_data<T> neighbor_emb_aggregation_mean[EMB_SIZE_IN];
     variance_incremental_data<T> neighbor_emb_aggregation_variance[EMB_SIZE_IN];
 
-    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++) {
-        #pragma HLS loop_tripcount min = 0 max = DEGREE_GUESS
+    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++)
+    {
+#pragma HLS loop_tripcount min = 1 max = DEGREE_GUESS
 
         T neighbor_emb[EMB_SIZE_IN];
 
         int neighbor_id = neighbors[neighbor];
 
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             neighbor_emb[i] = node_embedding_table_in[neighbor_id][i];
         }
 
         T neighbor_and_self_concat_emb[EMB_SIZE_IN * 2];
 
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             neighbor_and_self_concat_emb[i] = current_node_embedding_in[i];
             neighbor_and_self_concat_emb[i + EMB_SIZE_IN] = neighbor_emb[i];
         }
@@ -1252,7 +1806,8 @@ void pna_conv_agg(
         T transformed_emb[EMB_SIZE_IN] = {};
         linear<EMB_SIZE_IN * 2, EMB_SIZE_IN, P_IN, P_IN, T>(neighbor_and_self_concat_emb, transformed_emb, transfrom_lin_weight, transfrom_lin_bias);
 
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             max_incremental_update(neighbor_emb_aggregation_max[i], transformed_emb[i]);
             min_incremental_update(neighbor_emb_aggregation_min[i], transformed_emb[i]);
             mean_incremental_update(neighbor_emb_aggregation_mean[i], transformed_emb[i]);
@@ -1261,14 +1816,16 @@ void pna_conv_agg(
     }
 
     // finalize
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         max_incremental_finalize(neighbor_emb_aggregation_max[i]);
         min_incremental_finalize(neighbor_emb_aggregation_min[i]);
         mean_incremental_finalize(neighbor_emb_aggregation_mean[i]);
         variance_incremental_finalize(neighbor_emb_aggregation_variance[i]);
     }
 
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         neighbor_emb_agg_max[i] = neighbor_emb_aggregation_max[i].max;
         neighbor_emb_agg_min[i] = neighbor_emb_aggregation_min[i].min;
         neighbor_emb_agg_mean[i] = neighbor_emb_aggregation_mean[i].mean;
@@ -1279,8 +1836,7 @@ void pna_conv_agg(
 template <
     int EMB_SIZE_IN,
     int CONCAT_SIZE,
-    typename T
->
+    typename T>
 void pna_conv_concat(
     T current_node_embedding_in[EMB_SIZE_IN],
     T agg_max_identity_emb[EMB_SIZE_IN],
@@ -1295,37 +1851,38 @@ void pna_conv_concat(
     T agg_min_attenuation[EMB_SIZE_IN],
     T agg_mean_attenuation[EMB_SIZE_IN],
     T agg_std_attenuation[EMB_SIZE_IN],
-    T pre_apply_emb[CONCAT_SIZE]
-){
-    #pragma HLS INLINE off
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
-        pre_apply_emb[i + EMB_SIZE_IN*0] = current_node_embedding_in[i];
+    T pre_apply_emb[CONCAT_SIZE])
+{
+#pragma HLS INLINE off
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
+        pre_apply_emb[i + EMB_SIZE_IN * 0] = current_node_embedding_in[i];
 
-        pre_apply_emb[i + EMB_SIZE_IN*1] = agg_max_identity_emb[i];
-        pre_apply_emb[i + EMB_SIZE_IN*2] = agg_min_identity_emb[i];
-        pre_apply_emb[i + EMB_SIZE_IN*3] = agg_mean_identity_emb[i];
-        pre_apply_emb[i + EMB_SIZE_IN*4] = agg_std_identity_emb[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 1] = agg_max_identity_emb[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 2] = agg_min_identity_emb[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 3] = agg_mean_identity_emb[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 4] = agg_std_identity_emb[i];
 
-        pre_apply_emb[i + EMB_SIZE_IN*5] = agg_max_amplification[i];
-        pre_apply_emb[i + EMB_SIZE_IN*6] = agg_min_amplification[i];
-        pre_apply_emb[i + EMB_SIZE_IN*7] = agg_mean_amplification[i];
-        pre_apply_emb[i + EMB_SIZE_IN*8] = agg_std_amplification[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 5] = agg_max_amplification[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 6] = agg_min_amplification[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 7] = agg_mean_amplification[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 8] = agg_std_amplification[i];
 
-        pre_apply_emb[i + EMB_SIZE_IN*9] = agg_max_attenuation[i];
-        pre_apply_emb[i + EMB_SIZE_IN*10] = agg_min_attenuation[i];
-        pre_apply_emb[i + EMB_SIZE_IN*11] = agg_mean_attenuation[i];
-        pre_apply_emb[i + EMB_SIZE_IN*12] = agg_std_attenuation[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 9] = agg_max_attenuation[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 10] = agg_min_attenuation[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 11] = agg_mean_attenuation[i];
+        pre_apply_emb[i + EMB_SIZE_IN * 12] = agg_std_attenuation[i];
     }
 }
 
-template<typename T>
+template <typename T>
 void pna_conv_copy_num_in_neighbors(
     T &num_in_neighbors,
     T &num_in_neighbors_0,
     T &num_in_neighbors_1,
-    T &num_in_neighbors_2
-) {
-    # pragma HLS INLINE off
+    T &num_in_neighbors_2)
+{
+#pragma HLS INLINE off
     num_in_neighbors_0 = num_in_neighbors;
     num_in_neighbors_1 = num_in_neighbors;
     num_in_neighbors_2 = num_in_neighbors;
@@ -1345,8 +1902,7 @@ template <
     int NUM_EDGES_GUESS = MAX_EDGES,
     int DEGREE_GUESS = MAX_NODES,
     int P_IN = 1,
-    int P_OUT = 1
->
+    int P_OUT = 1>
 void pna_conv(
     int num_nodes,
     int num_edges,
@@ -1363,23 +1919,25 @@ void pna_conv(
     T apply_lin_bias[APPLY_OUT],
     T final_lin_weight[EMB_SIZE_OUT][EMB_SIZE_OUT],
     T final_lin_bias[EMB_SIZE_OUT],
-    T pna_avg_degree_log
-) {
-    #pragma HLS INLINE off
+    T pna_avg_degree_log)
+{
+#pragma HLS INLINE off
 
-    for (int node = 0; node < num_nodes; node++) {
-        #pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
+    for (int node = 0; node < num_nodes; node++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
 
-        #pragma HLS DATAFLOW
-        #pragma HLS stable variable=edge_list
-        #pragma HLS stable variable=neightbor_table_offsets
-        #pragma HLS stable variable=neighbor_table
-        #pragma HLS stable variable=in_degree_table
-        #pragma HLS stable variable=out_degree_table
+        // #pragma HLS DATAFLOW
+        // #pragma HLS stable variable = edge_list
+        // #pragma HLS stable variable = neightbor_table_offsets
+        // #pragma HLS stable variable = neighbor_table
+        // #pragma HLS stable variable = in_degree_table
+        // #pragma HLS stable variable = out_degree_table
 
         T current_node_embedding_in[EMB_SIZE_IN];
         T current_node_embedding_in_for_agg[EMB_SIZE_IN];
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             T x_in = node_embedding_table_in[node][i];
             current_node_embedding_in[i] = x_in;
             current_node_embedding_in_for_agg[i] = x_in;
@@ -1395,7 +1953,7 @@ void pna_conv(
         // num_in_neighbors_1 = num_in_neighbors;
         // num_in_neighbors_2 = num_in_neighbors;
         // turn into a void function
-        
+
         pna_conv_copy_num_in_neighbors(num_in_neighbors, num_in_neighbors_0, num_in_neighbors_1, num_in_neighbors_2);
 
         int neighbors[MAX_NODES];
@@ -1413,22 +1971,22 @@ void pna_conv(
             neighbor_table);
 
         int num_in_neighbors_clamped;
-        if (num_in_neighbors_1 < 1) {
+        if (num_in_neighbors_1 < 1)
+        {
             num_in_neighbors_clamped = 1;
-        } else {
+        }
+        else
+        {
             num_in_neighbors_clamped = num_in_neighbors_1;
         }
 
         T amplification_factor = m_log(T(num_in_neighbors_clamped + 1)) / pna_avg_degree_log;
         T attenuation_factor = pna_avg_degree_log / m_log(T(num_in_neighbors_clamped + 1));
 
-
         T agg_max_identity_emb[EMB_SIZE_IN];
         T agg_min_identity_emb[EMB_SIZE_IN];
         T agg_mean_identity_emb[EMB_SIZE_IN];
         T agg_std_identity_emb[EMB_SIZE_IN];
-
-
 
         pna_conv_agg<
             MAX_NODES,
@@ -1444,8 +2002,7 @@ void pna_conv(
             NUM_EDGES_GUESS,
             DEGREE_GUESS,
             P_IN,
-            P_OUT
-        >(
+            P_OUT>(
             num_in_neighbors_2,
             neighbors,
             node_embedding_table_in,
@@ -1455,8 +2012,7 @@ void pna_conv(
             agg_mean_identity_emb,
             agg_std_identity_emb,
             transfrom_lin_weight,
-            transfrom_lin_bias
-        );
+            transfrom_lin_bias);
 
         // const int AGG_EMB_SIZE = EMB_SIZE_IN * 4;
 
@@ -1487,7 +2043,8 @@ void pna_conv(
         T agg_mean_identity_1[EMB_SIZE_IN];
         T agg_std_identity_1[EMB_SIZE_IN];
 
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             T x_agg_max = agg_max_identity_emb[i];
             T x_agg_min = agg_min_identity_emb[i];
             T x_agg_mean = agg_mean_identity_emb[i];
@@ -1504,7 +2061,6 @@ void pna_conv(
             agg_std_identity_1[i] = x_agg_std;
         }
 
-
         T agg_max_amplification[EMB_SIZE_IN];
         T agg_min_amplification[EMB_SIZE_IN];
         T agg_mean_amplification[EMB_SIZE_IN];
@@ -1515,7 +2071,8 @@ void pna_conv(
         T agg_mean_attenuation[EMB_SIZE_IN];
         T agg_std_attenuation[EMB_SIZE_IN];
 
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             T x_agg_max = agg_max_identity_0[i];
             T x_agg_min = agg_min_identity_0[i];
             T x_agg_mean = agg_mean_identity_0[i];
@@ -1540,8 +2097,7 @@ void pna_conv(
         pna_conv_concat<
             EMB_SIZE_IN,
             concat_size,
-            T
-        >(
+            T>(
             current_node_embedding_in,
             agg_max_identity_1,
             agg_min_identity_1,
@@ -1555,8 +2111,7 @@ void pna_conv(
             agg_min_attenuation,
             agg_mean_attenuation,
             agg_std_attenuation,
-            pre_apply_emb
-        );
+            pre_apply_emb);
 
         // self, then all the aggregations, then all the amplification aggregations, then all the attenuation aggregations
         // for (int i = 0; i < EMB_SIZE_IN; i++) {
@@ -1594,7 +2149,8 @@ void pna_conv(
         linear<concat_size, EMB_SIZE_OUT, P_IN, P_OUT, T>(pre_apply_emb, new_node_embedding_hidden, apply_lin_weight, apply_lin_bias);
         linear<EMB_SIZE_OUT, EMB_SIZE_OUT, P_OUT, P_OUT, T>(new_node_embedding_hidden, new_node_embedding, final_lin_weight, final_lin_bias);
 
-        for (int i = 0; i < EMB_SIZE_OUT; i++) {
+        for (int i = 0; i < EMB_SIZE_OUT; i++)
+        {
             node_embedding_table_out[node][i] = new_node_embedding[i];
         }
     }
@@ -1612,43 +2168,45 @@ template <
     int NUM_EDGES_GUESS = MAX_EDGES,
     int DEGREE_GUESS = MAX_NODES,
     int P_IN = 1,
-    int P_OUT = 1
->
+    int P_OUT = 1>
 void sage_conv_agg(
     int num_in_neighbors,
     int neighbors[MAX_NODES],
     T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
-    T agg_embedding[EMB_SIZE_IN]
-){
-    #pragma HLS INLINE off
+    T agg_embedding[EMB_SIZE_IN])
+{
+#pragma HLS INLINE off
 
     mean_incremental_data<T> neighbor_emb_aggregation_mean[EMB_SIZE_IN];
 
-    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++) {
-        #pragma HLS loop_tripcount min = 0 max = DEGREE_GUESS
+    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++)
+    {
+#pragma HLS loop_tripcount min = 1 max = DEGREE_GUESS
 
         T neighbor_emb[EMB_SIZE_IN];
 
         int neighbor_id = neighbors[neighbor];
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             neighbor_emb[i] = node_embedding_table_in[neighbor_id][i];
         }
 
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             mean_incremental_update(neighbor_emb_aggregation_mean[i], neighbor_emb[i]);
         }
     }
 
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         mean_incremental_finalize(neighbor_emb_aggregation_mean[i]);
     }
 
-    for (int i = 0; i < EMB_SIZE_IN; i++) {
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
         agg_embedding[i] = neighbor_emb_aggregation_mean[i].mean;
     }
-
 }
-
 
 template <int MAX_NODES,
           int MAX_EDGES,
@@ -1672,16 +2230,225 @@ void sage_conv(
     int out_degree_table[MAX_NODES],
     T neighbor_lin_weight[EMB_SIZE_OUT][EMB_SIZE_IN],
     T neighbor_lin_bias[EMB_SIZE_OUT],
-    T self_lin_weight[EMB_SIZE_OUT][EMB_SIZE_IN]) {
+    T self_lin_weight[EMB_SIZE_OUT][EMB_SIZE_IN])
+{
+#pragma HLS stable variable = num_nodes
+#pragma HLS stable variable = num_edges
 
-    for (int node = 0; node < num_nodes; node++) {
-        #pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
+#pragma HLS DATAFLOW
+    T node_embedding_table_in_0[MAX_NODES][EMB_SIZE_IN];
+    T node_embedding_table_in_1[MAX_NODES][EMB_SIZE_IN];
 
-        #pragma HLS DATAFLOW
+    for (int node = 0; node < num_nodes; node++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+#pragma HLS loop_tripcount min = 1 max = EMB_SIZE_IN
+            T x_in = node_embedding_table_in[node][i];
+            node_embedding_table_in_0[node][i] = x_in;
+            node_embedding_table_in_1[node][i] = x_in;
+        }
+    }
+
+#pragma HLS INLINE off
+
+    for (int node = 0; node < num_nodes; node++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
+
+#pragma HLS DATAFLOW
+#pragma HLS stable variable = num_nodes
+#pragma HLS stable variable = num_edges
+
+        // #pragma HLS stable variable = edge_list
+        // #pragma HLS stable variable = neightbor_table_offsets
+        // #pragma HLS stable variable = neighbor_table
+        // #pragma HLS stable variable = in_degree_table
+        // #pragma HLS stable variable = out_degree_table
+
+        // #pragma HLS stable variable = neighbor_lin_weight
+        // #pragma HLS stable variable = neighbor_lin_bias
+
+        // #pragma HLS stable variable = self_lin_weight
 
         T current_node_embedding_in[EMB_SIZE_IN];
 
-        for (int i = 0; i < EMB_SIZE_IN; i++) {
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            current_node_embedding_in[i] = node_embedding_table_in_0[node][i];
+        }
+
+        int num_in_neighbors = in_degree_table[node];
+        int neighbors[MAX_NODES];
+
+        gather_node_neighbors<
+            MAX_NODES,
+            MAX_EDGES,
+            NUM_NODES_GUESS,
+            NUM_EDGES_GUESS,
+            DEGREE_GUESS>(
+            node,
+            num_in_neighbors,
+            neighbors,
+            neightbor_table_offsets,
+            neighbor_table);
+
+        T agg_emb[EMB_SIZE_IN];
+        sage_conv_agg<
+            MAX_NODES,
+            MAX_EDGES,
+            EMB_SIZE_IN,
+            EMB_SIZE_OUT,
+            T,
+            NUM_NODES_GUESS,
+            NUM_EDGES_GUESS,
+            DEGREE_GUESS,
+            P_IN,
+            P_OUT>(
+            num_in_neighbors,
+            neighbors,
+            node_embedding_table_in_1,
+            agg_emb);
+
+        // transform the aggregation embedding
+        T agg_emb_transformed[EMB_SIZE_OUT];
+        linear<EMB_SIZE_IN, EMB_SIZE_OUT, P_IN, P_OUT, T>(agg_emb, agg_emb_transformed, neighbor_lin_weight, neighbor_lin_bias);
+
+        // transform the current node embedding
+        T self_emb_transformed[EMB_SIZE_OUT];
+        T init = T(0.0);
+        T self_lin_bias[EMB_SIZE_OUT];
+        for (int i = 0; i < EMB_SIZE_OUT; i++)
+        {
+            self_lin_bias[i] = init;
+        }
+        linear<EMB_SIZE_IN, EMB_SIZE_OUT, P_IN, P_OUT, T>(current_node_embedding_in, self_emb_transformed, self_lin_weight, self_lin_bias);
+
+        // add the two embeddings
+        T new_node_embedding[EMB_SIZE_OUT];
+        for (int i = 0; i < EMB_SIZE_OUT; i++)
+        {
+            new_node_embedding[i] = agg_emb_transformed[i] + self_emb_transformed[i];
+        }
+
+        // write to node_embedding_table_out
+        for (int i = 0; i < EMB_SIZE_OUT; i++)
+        {
+            node_embedding_table_out[node][i] = new_node_embedding[i];
+        }
+    }
+}
+
+// TODO: GAT layer
+
+
+
+// lg conv
+
+// LGConv
+template <int MAX_NODES,
+          int MAX_EDGES,
+          int EMB_SIZE_IN,
+          int EMB_SIZE_OUT,
+          typename T,
+          int NUM_NODES_GUESS = MAX_NODES,
+          int NUM_EDGES_GUESS = MAX_EDGES,
+          int DEGREE_GUESS = MAX_NODES,
+          int P_IN = 1,
+          int P_OUT = 1>
+void lg_conv_agg(
+    T current_node_embedding_in[EMB_SIZE_IN],
+    int num_in_neighbors,
+    int neighbors[MAX_NODES],
+    T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
+    int in_degree_table[MAX_NODES],
+    T agg_embedding[EMB_SIZE_IN])
+{
+#pragma HLS INLINE off
+
+    sum_incremental_data<T> neighbor_emb_aggregation_sum[EMB_SIZE_IN];
+    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++)
+    {
+#pragma HLS loop_tripcount min = 0 max = DEGREE_GUESS
+
+        T neighbor_emb[EMB_SIZE_IN];
+
+        int neighbor_id = neighbors[neighbor];
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            neighbor_emb[i] = node_embedding_table_in[neighbor_id][i];
+        }
+
+        int in_degree_neighbor = in_degree_table[neighbor_id];
+        int in_degree_node = num_in_neighbors;
+
+        T degree_scaling_factor = T(m_recip(T(m_sqrt(T(in_degree_node * in_degree_neighbor)))));
+
+        T neighbor_emb_transformed[EMB_SIZE_IN];
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            neighbor_emb_transformed[i] = neighbor_emb[i] * degree_scaling_factor;
+        }
+
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            sum_incremental_update(neighbor_emb_aggregation_sum[i], neighbor_emb_transformed[i]);
+        }
+    }
+
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
+        sum_incremental_finalize(neighbor_emb_aggregation_sum[i]);
+    }
+
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
+        agg_embedding[i] = neighbor_emb_aggregation_sum[i].sum;
+    }
+}
+
+template <int MAX_NODES,
+          int MAX_EDGES,
+          int EMB_SIZE_IN,
+          int EMB_SIZE_OUT,
+          typename T,
+          int NUM_NODES_GUESS = MAX_NODES,
+          int NUM_EDGES_GUESS = MAX_EDGES,
+          int DEGREE_GUESS = MAX_NODES,
+          int P_IN = 1,
+          int P_OUT = 1>
+void lg_conv(
+    int num_nodes,
+    int num_edges,
+    T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
+    T node_embedding_table_out[MAX_NODES][EMB_SIZE_OUT],
+    int edge_list[MAX_EDGES][2],
+    int neightbor_table_offsets[MAX_NODES],
+    int neighbor_table[MAX_EDGES],
+    int in_degree_table[MAX_NODES],
+    int out_degree_table[MAX_NODES]
+    // T apply_lin_weight[EMB_SIZE_OUT][EMB_SIZE_IN],
+    // T apply_lin_bias[EMB_SIZE_OUT]
+)
+{
+
+#pragma HLS INLINE off
+
+    for (int node = 0; node < num_nodes; node++)
+    {
+#pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
+
+#pragma HLS DATAFLOW
+#pragma HLS stable variable = edge_list
+#pragma HLS stable variable = neightbor_table_offsets
+#pragma HLS stable variable = neighbor_table
+#pragma HLS stable variable = in_degree_table
+#pragma HLS stable variable = out_degree_table
+
+        T current_node_embedding_in[EMB_SIZE_IN];
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
             current_node_embedding_in[i] = node_embedding_table_in[node][i];
         }
 
@@ -1700,34 +2467,8 @@ void sage_conv(
             neightbor_table_offsets,
             neighbor_table);
 
-        // mean_incremental_data<T> neighbor_emb_aggregation_mean[EMB_SIZE_IN];
-
-        // for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++) {
-        //     #pragma HLS loop_tripcount min = 0 max = DEGREE_GUESS
-
-        //     T neighbor_emb[EMB_SIZE_IN];
-
-        //     int neighbor_id = neighbors[neighbor];
-        //     for (int i = 0; i < EMB_SIZE_IN; i++) {
-        //         neighbor_emb[i] = node_embedding_table_in[neighbor_id][i];
-        //     }
-
-        //     for (int i = 0; i < EMB_SIZE_IN; i++) {
-        //         mean_incremental_update(neighbor_emb_aggregation_mean[i], neighbor_emb[i]);
-        //     }
-        // }
-
-        // for (int i = 0; i < EMB_SIZE_IN; i++) {
-        //     mean_incremental_finalize(neighbor_emb_aggregation_mean[i]);
-        // }
-
-        // T agg_emb[EMB_SIZE_IN];
-        // for (int i = 0; i < EMB_SIZE_IN; i++) {
-        //     agg_emb[i] = neighbor_emb_aggregation_mean[i].mean;
-        // }
-
-        T agg_emb[EMB_SIZE_IN];
-        sage_conv_agg<
+        T agg_embedding[EMB_SIZE_IN];
+        lg_conv_agg<
             MAX_NODES,
             MAX_EDGES,
             EMB_SIZE_IN,
@@ -1738,41 +2479,228 @@ void sage_conv(
             DEGREE_GUESS,
             P_IN,
             P_OUT>(
+            current_node_embedding_in,
             num_in_neighbors,
             neighbors,
             node_embedding_table_in,
-            agg_emb);
+            in_degree_table,
+            agg_embedding);
 
-        // transform the aggregation embedding
-        T agg_emb_transformed[EMB_SIZE_OUT];
-        linear<EMB_SIZE_IN, EMB_SIZE_OUT, P_IN, P_OUT, T>(agg_emb, agg_emb_transformed, neighbor_lin_weight, neighbor_lin_bias);
+        // // compute new node embedding
+        // T new_node_embedding[EMB_SIZE_OUT];
+        // linear<EMB_SIZE_IN, EMB_SIZE_OUT, P_IN, P_OUT, T>(agg_embedding, new_node_embedding, apply_lin_weight, apply_lin_bias);
 
-        // transform the current node embedding
-        T self_emb_transformed[EMB_SIZE_OUT];
-        T init = T(0.0);
-        T self_lin_bias[EMB_SIZE_OUT];
-        for (int i = 0; i < EMB_SIZE_OUT; i++) {
-            self_lin_bias[i] = init;
-        }
-        linear<EMB_SIZE_IN, EMB_SIZE_OUT, P_IN, P_OUT, T>(current_node_embedding_in, self_emb_transformed, self_lin_weight, self_lin_bias);
-
-        // add the two embeddings
-        T new_node_embedding[EMB_SIZE_OUT];
-        for (int i = 0; i < EMB_SIZE_OUT; i++) {
-            new_node_embedding[i] = agg_emb_transformed[i] + self_emb_transformed[i];
-        }
-        
-        // write to node_embedding_table_out
-        for (int i = 0; i < EMB_SIZE_OUT; i++) {
-            node_embedding_table_out[node][i] = new_node_embedding[i];
+        // node_embedding_table_out[node] = new_node_embedding;
+        for (int i = 0; i < EMB_SIZE_OUT; i++)
+        {
+            node_embedding_table_out[node][i] = agg_embedding[i];
         }
     }
 }
 
-// TODO: GAT layer
+template <int MAX_NODES,
+          int MAX_EDGES,
+          int EMB_SIZE_IN,
+          int EMB_SIZE_OUT,
+          typename T,
+          int NUM_NODES_GUESS = MAX_NODES,
+          int NUM_EDGES_GUESS = MAX_EDGES,
+          int DEGREE_GUESS = MAX_NODES,
+          int P_IN = 1,
+          int P_OUT = 1>
+void simple_conv_agg(
+    T current_node_embedding_in[EMB_SIZE_IN],
+    int num_in_neighbors,
+    int neighbors[MAX_NODES],
+    T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
+    int in_degree_table[MAX_NODES],
+    T agg_embedding[EMB_SIZE_IN])
+{
+#pragma HLS INLINE off
 
+    sum_incremental_data<T> neighbor_emb_aggregation_sum[EMB_SIZE_IN];
+    for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++)
+    {
+#pragma HLS loop_tripcount min = 0 max = DEGREE_GUESS
 
+        T neighbor_emb[EMB_SIZE_IN];
 
+        int neighbor_id = neighbors[neighbor];
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            neighbor_emb[i] = node_embedding_table_in[neighbor_id][i];
+        }
+
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            sum_incremental_update(neighbor_emb_aggregation_sum[i], neighbor_emb[i]);
+        }
+    }
+
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
+        sum_incremental_finalize(neighbor_emb_aggregation_sum[i]);
+    }
+
+    for (int i = 0; i < EMB_SIZE_IN; i++)
+    {
+        agg_embedding[i] = neighbor_emb_aggregation_sum[i].sum;
+    }
+}
+
+/////////////////
+// Simple Conv //
+/////////////////
+template <int MAX_NODES,
+          int MAX_EDGES,
+          int EMB_SIZE_IN,
+          int EMB_SIZE_OUT,
+          typename T,
+          int NUM_NODES_GUESS = MAX_NODES,
+          int NUM_EDGES_GUESS = MAX_EDGES,
+          int DEGREE_GUESS = MAX_NODES,
+          int P_IN = 1,
+          int P_OUT = 1>
+void simple_conv(
+    int num_nodes,
+    int num_edges,
+    T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
+    T node_embedding_table_out[MAX_NODES][EMB_SIZE_OUT],
+    int edge_list[MAX_EDGES][2],
+    int neightbor_table_offsets[MAX_NODES],
+    int neighbor_table[MAX_EDGES],
+    int in_degree_table[MAX_NODES],
+    int out_degree_table[MAX_NODES])
+{
+
+#pragma HLS INLINE off
+
+    for (int node = 0; node < num_nodes; node++)
+    {
+#pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
+
+#pragma HLS DATAFLOW
+#pragma HLS stable variable = edge_list
+#pragma HLS stable variable = neightbor_table_offsets
+#pragma HLS stable variable = neighbor_table
+#pragma HLS stable variable = in_degree_table
+#pragma HLS stable variable = out_degree_table
+
+        T current_node_embedding_in[EMB_SIZE_IN];
+        for (int i = 0; i < EMB_SIZE_IN; i++)
+        {
+            current_node_embedding_in[i] = node_embedding_table_in[node][i];
+        }
+
+        int num_in_neighbors = in_degree_table[node];
+        int neighbors[MAX_NODES];
+
+        gather_node_neighbors<
+            MAX_NODES,
+            MAX_EDGES,
+            NUM_NODES_GUESS,
+            NUM_EDGES_GUESS,
+            DEGREE_GUESS>(
+            node,
+            num_in_neighbors,
+            neighbors,
+            neightbor_table_offsets,
+            neighbor_table);
+
+        T agg_embedding[EMB_SIZE_IN];
+        simple_conv_agg<
+            MAX_NODES,
+            MAX_EDGES,
+            EMB_SIZE_IN,
+            EMB_SIZE_OUT,
+            T,
+            NUM_NODES_GUESS,
+            NUM_EDGES_GUESS,
+            DEGREE_GUESS,
+            P_IN,
+            P_OUT>(
+            current_node_embedding_in,
+            num_in_neighbors,
+            neighbors,
+            node_embedding_table_in,
+            in_degree_table,
+            agg_embedding);
+
+        for (int i = 0; i < EMB_SIZE_OUT; i++)
+        {
+            node_embedding_table_out[node][i] = agg_embedding[i];
+        }
+    }
+}
+
+// EdgeConv
+
+// The edge convolutional operator from the “Dynamic Graph CNN for Learning on Point Clouds” paper.
+
+// \mathbf{x}^{\prime}_i = \sum_{j \in \mathcal{N}(i)}
+// h_{\mathbf{\Theta}}(\mathbf{x}_i \, \Vert \,
+// \mathbf{x}_j - \mathbf{x}_i),
+
+// where h_{\mathbf{\Theta}} denotes a neural network, .i.e. a MLP.
+
+// Parameters:
+
+//         nn (torch.nn.Module) – A neural network
+
+//         that maps pair-wise concatenated node features x of shape [-1, 2 * in_channels] to shape [-1, out_channels], e.g., defined by torch.nn.Sequential.
+
+//         aggr (str, optional) – The aggregation scheme to use ("add", "mean", "max"). (default: "max")
+
+//         **kwargs (optional) – Additional arguments of conv.MessagePassing.
+
+// Shapes:
+
+//         input: node features
+
+// or if bipartite, edge indices
+
+// output: node features
+// or if bipartite
+
+// mlp = MLP(
+//             [2 * in_channels, out_channels, out_channels],
+//             act=self.act,
+//             act_first=self.act_first,
+//             norm=self.norm,
+//             norm_kwargs=self.norm_kwargs,
+//         )
+//         return EdgeConv(mlp, **kwargs)
+
+// template <int MAX_NODES,
+//           int MAX_EDGES,
+//           int EMB_SIZE_IN,
+//           int EMB_SIZE_OUT,
+//           typename T,
+//           int NUM_NODES_GUESS = MAX_NODES,
+//           int NUM_EDGES_GUESS = MAX_EDGES,
+//           int DEGREE_GUESS = MAX_NODES,
+//           int P_IN = 1,
+//           int P_OUT = 1>
+// void edge_conv_agg(
+//     T current_node_embedding_in[EMB_SIZE_IN],
+//     int num_in_neighbors,
+//     int neighbors[MAX_NODES],
+//     T node_embedding_table_in[MAX_NODES][EMB_SIZE_IN],
+//     int in_degree_table[MAX_NODES],
+//     T agg_embedding[EMB_SIZE_IN]
+// ){
+// #pragma HLS INLINE off
+
+//     max_incremental_data<T> neighbor_emb_aggregation_max[EMB_SIZE_IN];
+//     for (int neighbor = 0; neighbor < num_in_neighbors; neighbor++) {
+//         #pragma HLS loop_tripcount min = 0 max = DEGREE_GUESS
+
+//         T neighbor_emb[EMB_SIZE_IN];
+
+//         int neighbor_id = neighbors[neighbor];
+//         for (int i = 0; i < EMB_SIZE_IN; i++) {
+//             neighbor_emb[i] = node_embedding_table_in[neighbor_id][i];
+//         }
 
 ////////////////////
 // global pooling //
@@ -1787,20 +2715,25 @@ template <int MAX_NODES,
 void global_add_pool(int num_nodes,
                      int num_edges,
                      T node_embedding_table[MAX_NODES][EMB_SIZE],
-                     T pooled_embedding[EMB_SIZE]) {
+                     T pooled_embedding[EMB_SIZE])
+{
 #pragma HLS INLINE off
 
     sum_incremental_data<T> sum_agg[EMB_SIZE];
-    for (int i = 0; i < num_nodes; i++) {
-#pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
-        for (int j = 0; j < EMB_SIZE; j++) {
+    for (int i = 0; i < num_nodes; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
+        for (int j = 0; j < EMB_SIZE; j++)
+        {
             sum_incremental_update(sum_agg[j], node_embedding_table[i][j]);
         }
     }
-    for (int i = 0; i < EMB_SIZE; i++) {
+    for (int i = 0; i < EMB_SIZE; i++)
+    {
         sum_incremental_finalize(sum_agg[i]);
     }
-    for (int i = 0; i < EMB_SIZE; i++) {
+    for (int i = 0; i < EMB_SIZE; i++)
+    {
         pooled_embedding[i] = sum_agg[i].sum;
     }
 }
@@ -1814,20 +2747,25 @@ template <int MAX_NODES,
 void global_mean_pool(int num_nodes,
                       int num_edges,
                       T node_embedding_table[MAX_NODES][EMB_SIZE],
-                      T pooled_embedding[EMB_SIZE]) {
+                      T pooled_embedding[EMB_SIZE])
+{
 #pragma HLS INLINE off
 
     mean_incremental_data<T> mean_agg[EMB_SIZE];
-    for (int i = 0; i < num_nodes; i++) {
-#pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
-        for (int j = 0; j < EMB_SIZE; j++) {
+    for (int i = 0; i < num_nodes; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
+        for (int j = 0; j < EMB_SIZE; j++)
+        {
             mean_incremental_update(mean_agg[j], node_embedding_table[i][j]);
         }
     }
-    for (int i = 0; i < EMB_SIZE; i++) {
+    for (int i = 0; i < EMB_SIZE; i++)
+    {
         mean_incremental_finalize(mean_agg[i]);
     }
-    for (int i = 0; i < EMB_SIZE; i++) {
+    for (int i = 0; i < EMB_SIZE; i++)
+    {
         pooled_embedding[i] = mean_agg[i].mean;
     }
 }
@@ -1841,20 +2779,25 @@ template <int MAX_NODES,
 void global_max_pool(int num_nodes,
                      int num_edges,
                      T node_embedding_table[MAX_NODES][EMB_SIZE],
-                     T pooled_embedding[EMB_SIZE]) {
+                     T pooled_embedding[EMB_SIZE])
+{
 #pragma HLS INLINE off
 
     max_incremental_data<T> max_agg[EMB_SIZE];
-    for (int i = 0; i < num_nodes; i++) {
-#pragma HLS loop_tripcount min = 0 max = NUM_NODES_GUESS
-        for (int j = 0; j < EMB_SIZE; j++) {
+    for (int i = 0; i < num_nodes; i++)
+    {
+#pragma HLS loop_tripcount min = 1 max = NUM_NODES_GUESS
+        for (int j = 0; j < EMB_SIZE; j++)
+        {
             max_incremental_update(max_agg[j], node_embedding_table[i][j]);
         }
     }
-    for (int i = 0; i < EMB_SIZE; i++) {
+    for (int i = 0; i < EMB_SIZE; i++)
+    {
         max_incremental_finalize(max_agg[i]);
     }
-    for (int i = 0; i < EMB_SIZE; i++) {
+    for (int i = 0; i < EMB_SIZE; i++)
+    {
         pooled_embedding[i] = max_agg[i].max;
     }
 }

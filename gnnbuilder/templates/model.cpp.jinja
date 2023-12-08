@@ -151,8 +151,14 @@ F_TYPE node_emb_out[{{ max_nodes }}][{{ model.gnn_output_dim }}] = {0};
 void compute_gnn_head(int n_nodes, int n_edges){
     #pragma HLS INLINE off
     #pragma HLS DATAFLOW
-    
 
+    #pragma HLS stable variable=n_nodes
+    #pragma HLS stable variable=n_edges
+
+    // #pragma HLS stable variable=neightbor_table_offsets
+    // #pragma HLS stable variable=neighbor_table
+    // #pragma HLS stable variable=in_degree_table
+    // #pragma HLS stable variable=out_degree_table
 
     // activations
     {% if model.gnn_activation %}
@@ -167,10 +173,11 @@ void compute_gnn_head(int n_nodes, int n_edges){
         {% else %}
         {% endif %}
     {% endif %}
+    // activation_kernel_type={{activation_kernel_type}}
 
     {% if model.gnn_num_layers == 0 %}
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         for (int j = 0; j < {{ input_node_features_dim }}; j++) {
             node_emb_out[i][j] = node_feature_table[i][j];
         }
@@ -201,15 +208,15 @@ void compute_gnn_head(int n_nodes, int n_edges){
     static int in_degree_table_{{(loop.index - 1)}}[{{ max_nodes }}];
     static int out_degree_table_{{(loop.index - 1)}}[{{ max_nodes }}];
 
-    #pragma HLS stable variable=edge_list_{{(loop.index - 1)}}
-    #pragma HLS stable variable=neightbor_table_offsets_{{(loop.index - 1)}}
-    #pragma HLS stable variable=neighbor_table_{{(loop.index - 1)}}
-    #pragma HLS stable variable=in_degree_table_{{(loop.index - 1)}}
-    #pragma HLS stable variable=out_degree_table_{{(loop.index - 1)}}
+    // #pragma HLS stable variable=edge_list_{{(loop.index - 1)}}
+    // #pragma HLS stable variable=neightbor_table_offsets_{{(loop.index - 1)}}
+    // #pragma HLS stable variable=neighbor_table_{{(loop.index - 1)}}
+    // #pragma HLS stable variable=in_degree_table_{{(loop.index - 1)}}
+    // #pragma HLS stable variable=out_degree_table_{{(loop.index - 1)}}
     {% endfor %}
 
     for (int i = 0; i < n_edges; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_edges_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_edges_guess}}
         for (int j = 0; j < 2; j++) {
             int val = edge_list[i][j];
             {% for conv in model.gnn_convs %}
@@ -218,28 +225,28 @@ void compute_gnn_head(int n_nodes, int n_edges){
         }
     }
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         int val = neightbor_table_offsets[i];
         {% for conv in model.gnn_convs %}
         neightbor_table_offsets_{{(loop.index - 1)}}[i] = val;
         {% endfor %}
     }
     for (int i = 0; i < n_edges; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_edges_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_edges_guess}}
         int val = neighbor_table[i];
         {% for conv in model.gnn_convs %}
         neighbor_table_{{(loop.index - 1)}}[i] = val;
         {% endfor %}
     }
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         int val = in_degree_table[i];
         {% for conv in model.gnn_convs %}
         in_degree_table_{{(loop.index - 1)}}[i] = val;
         {% endfor %}
     }
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         int val = out_degree_table[i];
         {% for conv in model.gnn_convs %}
         out_degree_table_{{(loop.index - 1)}}[i] = val;
@@ -248,7 +255,7 @@ void compute_gnn_head(int n_nodes, int n_edges){
 
     // copy node features to the first input buffer
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         for (int j = 0; j < {{ input_node_features_dim }}; j++) {
             conv_0_in[i][j] = node_feature_table[i][j];
         }
@@ -281,7 +288,7 @@ void compute_gnn_head(int n_nodes, int n_edges){
 
     // read to input buffer and skip connection buffer if skip connection is enabled
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][0]}}; j++) {
             conv_{{(loop.index - 1)}}_in_conv[i][j] = conv_{{(loop.index - 1)}}_in[i][j];
             {% if do_skip %}
@@ -296,7 +303,7 @@ void compute_gnn_head(int n_nodes, int n_edges){
     // skip connection
     {% if do_skip %}
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][1]}}; j++) {
             conv_{{(loop.index - 1)}}_post_skip_connection[i][j] = conv_{{(loop.index - 1)}}_in_skip[i][j] + conv_{{(loop.index - 1)}}_post_conv[i][j];
         }
@@ -304,7 +311,7 @@ void compute_gnn_head(int n_nodes, int n_edges){
     {% endif %}
     // activation
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][1]}}; j++) {
             {% if do_skip %}
                 conv_{{(loop.index - 1)}}_post_activation[i][j] = {{activation_kernel_type}}(conv_{{(loop.index - 1)}}_post_skip_connection[i][j]);
@@ -315,7 +322,7 @@ void compute_gnn_head(int n_nodes, int n_edges){
     }
     // copy output to conv_out
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][1]}}; j++) {
             conv_{{(loop.index - 1)}}_out[i][j] = conv_{{(loop.index - 1)}}_post_activation[i][j];
         }
@@ -326,7 +333,7 @@ void compute_gnn_head(int n_nodes, int n_edges){
     {% if not_last %}
     // copy conv output to next conv input: conv_{{loop.index-1}}_out -> conv_{{loop.index}}_in
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         for (int j = 0; j < {{model.gnn_layer_sizes[loop.index - 1][1]}}; j++) {
             conv_{{loop.index}}_in[i][j] = conv_{{(loop.index - 1)}}_out[i][j];
         }
@@ -340,7 +347,7 @@ void compute_gnn_head(int n_nodes, int n_edges){
     // copy last conv output to node_emb_out
 
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         for (int j = 0; j < {{model.gnn_output_dim}}; j++) {
             node_emb_out[i][j] = conv_{{(model.gnn_num_layers - 1)}}_out[i][j];
         }
@@ -406,6 +413,12 @@ F_TYPE global_pooling_buffer[{{ model.gnn_output_dim * model.global_pooling.num_
 void compute_global_graph_pooling(int n_nodes, int n_edges){
     #pragma HLS INLINE off
     #pragma HLS DATAFLOW
+
+    #pragma HLS stable variable=n_nodes
+    #pragma HLS stable variable=n_edges
+
+
+
     #pragma HLS ARRAY_PARTITION variable=global_pooling_buffer block factor={{model.global_pooling.num_of_aggrs}} dim=1
     
     {% for agg in model.global_pooling.aggrs %}
@@ -415,7 +428,7 @@ void compute_global_graph_pooling(int n_nodes, int n_edges){
 
     // copy node_emb_out to global_pooling_in buffers
     for (int i = 0; i < n_nodes; i++) {
-        #pragma HLS loop_tripcount min=0 max={{num_nodes_guess}}
+        #pragma HLS loop_tripcount min=1 max={{num_nodes_guess}}
         for (int j = 0; j < {{model.gnn_output_dim}}; j++) {
             F_TYPE node_emb_out_i_j = node_emb_out[i][j];
             {% for agg in model.global_pooling.aggrs %}
@@ -441,6 +454,8 @@ F_TYPE mlp_buffer_out[{{model.mlp_head.out_dim}}] = {0};
 void compute_mlp_head(){
     #pragma HLS INLINE off
     #pragma HLS DATAFLOW
+
+
 
     {% if model.mlp_head.activation %}
         {% if model.mlp_head.activation.__name__ == "ReLU" %}
@@ -474,6 +489,9 @@ void compute_mlp_head(){
     
     // linear layer {{loop.index-1}}
     // not_last: {{not_last}}
+
+    // #pragma HLS stable variable=mlp_head_linear_layers_{{loop.index-1}}_weight_fixed
+    // #pragma HLS stable variable=mlp_head_linear_layers_{{loop.index-1}}_bias_fixed
 
     linear_buffered<
         {{layer.in_features}},
@@ -608,7 +626,7 @@ F_TYPE model_output_buffer[{{model.mlp_head.out_dim}}] = {0};
 
 void compute_model_output(){
     #pragma HLS INLINE off
-    #pragma HLS DATAFLOW
+    {# #pragma HLS DATAFLOW #}
 
     {% if model.output_activation %}
         {% if model.output_activation.__name__ == "ReLU" %}

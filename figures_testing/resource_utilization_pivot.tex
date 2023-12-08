@@ -1,0 +1,16 @@
+\begin{table}
+\caption{Resource usage of FPGA-Base and FPGA-Parallel model implementations.}
+\label{tab:resources}
+\begin{tabular}{l|cccc|cccc|}
+\toprule
+runtime_type & \multicolumn{4}{c|}{FPGA-Base} & \multicolumn{4}{c|}{FPGA-Parallel} \\
+resource & BRAM & DSP & FF & LUT & BRAM & DSP & FF & LUT \\
+model &  &  &  &  &  &  &  &  \\
+\midrule
+GCN & 22.2% & 1.0% & 4.9% & 10.9% & 48.7% & 6.2% & 2.7% & 11.2% \\
+GIN & 24.5% & 0.4% & 2.3% & 4.8% & 82.5% & 11.6% & 2.6% & 15.1% \\
+PNA & 27.2% & 1.6% & 5.3% & 11.0% & 67.9% & 7.1% & 3.8% & 13.3% \\
+SAGE & 24.3% & 0.3% & 4.2% & 7.9% & 78.7% & 6.0% & 2.6% & 18.7% \\
+\bottomrule
+\end{tabular}
+\end{table}

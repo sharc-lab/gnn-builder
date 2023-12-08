@@ -8,8 +8,11 @@ from torch_geometric.nn import (  # GINEConv,
     GATConv,
     GCNConv,
     GINConv,
+    GINEConv,
+    LGConv,
     PNAConv,
     SAGEConv,
+    SimpleConv,
     aggr,
 )
 from torch_geometric.typing import Adj
@@ -42,14 +45,20 @@ class GCNConv_GNNB(nn.Module):
 
 
 class GIN_MLP(nn.Module):
-    def __init__(self, in_dim: int, out_dim: int, hidden_dim: int = 64):
+    def __init__(self, in_dim: int, out_dim: int, hidden_dim: int | None = None):
         super().__init__()
         self.in_dim = in_dim
-        self.hidden_dim = hidden_dim
         self.out_dim = out_dim
+        if hidden_dim is None:
+            self.hidden_dim = out_dim
+        else:
+            self.hidden_dim = hidden_dim
         self.linear_0 = nn.Linear(self.in_dim, self.hidden_dim)
         self.linear_1 = nn.Linear(self.hidden_dim, self.out_dim)
         self.relu = nn.ReLU()
+
+        # needed so GINE can infer in_features
+        self.in_features = self.in_dim
 
     def forward(self, x):
         x = self.linear_0(x)
@@ -63,7 +72,7 @@ class GINConv_GNNB(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        hidden_dim: int = 64,
+        hidden_dim: int | None = None,
         eps: float = 0.0,
         p_in: int = 1,
         p_out: int = 1,
@@ -78,7 +87,7 @@ class GINConv_GNNB(nn.Module):
         self.p_in = p_in
         self.p_out = p_out
 
-        self.mlp = GIN_MLP(in_channels, out_channels, hidden_dim)
+        self.mlp = GIN_MLP(in_channels, out_channels, None)
         self.conv = GINConv(self.mlp, eps=eps, train_eps=False)
 
     def forward(self, x: Tensor, edge_index: Adj) -> Tensor:
@@ -91,7 +100,7 @@ class GINEConv_GNNB(nn.Module):
         in_channels: int,
         out_channels: int,
         edge_dim: int,
-        hidden_dim: int = 64,
+        hidden_dim: int | None = None,
         eps: float = 0.0,
         p_in: int = 1,
         p_out: int = 1,
@@ -223,9 +232,8 @@ class PNAConv_GNNB(nn.Module):
         self.conv = PNAConv(
             in_channels, out_channels, self.aggregators, self.scalers, fake_deg_tensor
         )
-        self.conv.aggr_module.init_avg_deg_log = self.delta
-        self.conv.aggr_module.reset_parameters()
 
+        self.conv.aggr_module.avg_deg_log = torch.Tensor([self.delta])
         self.delta_scaler = self.conv.aggr_module.avg_deg_log.item()
 
     def forward(self, x: Tensor, edge_index: Adj) -> Tensor:
@@ -249,6 +257,58 @@ class SAGEConv_GNNB(nn.Module):
         self.p_out = p_out
 
         self.conv = SAGEConv(in_channels, out_channels)
+
+    def forward(self, x: Tensor, edge_index: Adj) -> Tensor:
+        return self.conv(x, edge_index)
+
+
+class LGConv_GNNB(nn.Module):
+    def __init__(
+        self, in_channels: int, out_channels: int, p_in: int = 1, p_out: int = 1
+    ):
+        super().__init__()
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+
+        if self.in_channels != self.out_channels:
+            print(self.in_channels, self.out_channels)
+            raise ValueError(
+                "LGConv requires the input and output channels to be the same."
+            )
+
+        self.p_in = p_in
+        self.p_out = p_out
+
+        self.conv = LGConv()
+
+    def forward(self, x: Tensor, edge_index: Adj) -> Tensor:
+        return self.conv(x, edge_index)
+
+
+class SimpleConv_GNNB(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        aggregation: str = "sum",
+        p_in: int = 1,
+        p_out: int = 1,
+    ):
+        super().__init__()
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+
+        if self.in_channels != self.out_channels:
+            raise ValueError("SimpleConv requires in_channels == out_channels")
+
+        self.aggregation = aggregation
+
+        self.p_in = p_in
+        self.p_out = p_out
+
+        self.conv = SimpleConv(aggr=self.aggregation)
 
     def forward(self, x: Tensor, edge_index: Adj) -> Tensor:
         return self.conv(x, edge_index)
