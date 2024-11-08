@@ -487,6 +487,9 @@ class Project:
             print(proc_build.stderr.decode("utf-8"))
             raise Exception(f"{self.name} - Kernel build failed.")
 
+        else:
+            print(proc_build.stdout.decode("utf-8"))
+
     def run_lightningsim_in_env(solution_path, env_name="lightningsim_env"):
         """
         Run lightningsim command in specified conda environment. Creates environment if it doesn't exist.
@@ -576,6 +579,3 @@ class Project:
         except Exception as e:
             print(f"Unexpected error: {e}")
             return False
-
-        else:
-            print(proc_build.stdout.decode("utf-8"))
