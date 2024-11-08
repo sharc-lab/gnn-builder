@@ -4,6 +4,7 @@ import subprocess
 from functools import cached_property
 from pathlib import Path
 from typing import Optional, Union
+import sys
 
 import jinja2
 import numpy as np
@@ -485,5 +486,96 @@ class Project:
             print(proc_build.stdout.decode("utf-8"))
             print(proc_build.stderr.decode("utf-8"))
             raise Exception(f"{self.name} - Kernel build failed.")
+
+    def run_lightningsim_in_env(solution_path, env_name="lightningsim_env"):
+        """
+        Run lightningsim command in specified conda environment. Creates environment if it doesn't exist.
+        
+        Args:
+            solution_path (str): Path to the Vitis HLS solution1 directory
+            env_name (str): Name of the conda environment to use
+        
+        Returns:
+            bool: True if command execution was successful, False otherwise
+        """
+        def check_env_exists(env_name):
+            try:
+                # List all conda environments and check if our environment exists
+                result = subprocess.run(['conda', 'env', 'list'], 
+                                     capture_output=True, 
+                                     text=True, 
+                                     check=True)
+                return env_name in result.stdout
+            except subprocess.CalledProcessError as e:
+                print(f"Error checking conda environments: {e}")
+                return False
+    
+        def create_environment(env_name):
+            try:
+                print(f"Creating new environment: {env_name}")
+                create_cmd = [
+                    'conda', 'create', '--yes', '--name', env_name,
+                    '--channel', 'https://sharc-lab.github.io/LightningSim/repo',
+                    '--channel', 'conda-forge',
+                    'lightningsim'
+                ]
+                subprocess.run(create_cmd, check=True)
+                return True
+            except subprocess.CalledProcessError as e:
+                print(f"Error creating conda environment: {e}")
+                return False
+    
+        def run_command(solution_path):
+            try:
+                # Activate the conda environment and run the command
+                # We need to use shell=True here because conda activation requires shell features
+                if sys.platform == "win32":
+                    activate_cmd = f"conda activate {env_name} && lightningsim {solution_path}"
+                    shell_cmd = ["cmd", "/c", activate_cmd]
+                else:
+                    activate_cmd = f"source activate {env_name} && lightningsim {solution_path}"
+                    shell_cmd = ["bash", "-c", activate_cmd]
+                
+                result = subprocess.run(
+                    shell_cmd,
+                    check=True,
+                    text=True
+                )
+                return True
+            except subprocess.CalledProcessError as e:
+                print(f"Error running lightningsim command: {e}")
+                return False
+    
+        try:
+            # Verify solution path exists
+            if not os.path.exists(solution_path):
+                raise FileNotFoundError(f"Solution path does not exist: {solution_path}")
+    
+            # Check if environment exists
+            if not check_env_exists(env_name):
+                print(f"Environment {env_name} not found.")
+                if not create_environment(env_name):
+                    raise RuntimeError("Failed to create conda environment")
+                print(f"Successfully created environment: {env_name}")
+            else:
+                print(f"Using existing environment: {env_name}")
+    
+            # Run the command
+            if run_command(solution_path):
+                print("Command executed successfully")
+                return True
+            else:
+                raise RuntimeError("Command execution failed")
+    
+        except FileNotFoundError as e:
+            print(f"File error: {e}")
+            return False
+        except RuntimeError as e:
+            print(f"Runtime error: {e}")
+            return False
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            return False
+
         else:
             print(proc_build.stdout.decode("utf-8"))
